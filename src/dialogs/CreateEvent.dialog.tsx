@@ -1,9 +1,12 @@
 import { useMaskito } from '@maskito/react';
-import { Button, Dialog, TextField } from '@mui/material';
+import { Button, Dialog, Fab, TextField } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { maskitoTimeOptionsGenerator } from '@maskito/kit';
 import { Activity } from '../types/activity.type';
 import { Raffle } from '../types/raffle.type';
+import { Add, Autorenew, CloudDownload, CreateOutlined, DeleteOutline } from '@mui/icons-material';
+import { Prize, PrizeList } from '../types/prize.type';
+import { v4 as uuidv4 } from 'uuid';
 
 const timeMask = maskitoTimeOptionsGenerator({ mode: 'HH:MM' });
 
@@ -28,6 +31,9 @@ function CreateEventDialog(props: CreateEventDialogProps) {
   const [endTime, setEndTime] = useState('');
   const [eventRule, setEventRule] = useState('');
   const [duration, setDuration] = useState('');
+  const [prizes, setPrizes] = useState<PrizeList>([]);
+  const [currentPrize, setCurrentPrize] = useState<Prize | null>(null);
+  const [showPrizeEditing, setShowPrizeEditing] = useState<boolean>(false);
 
   useEffect(() => {
     if (data) {
@@ -38,9 +44,10 @@ function CreateEventDialog(props: CreateEventDialogProps) {
         const raffleData = data as Raffle;
         setEventRule(raffleData.rule || '');
         setDuration(raffleData.duration || '');
+        setPrizes(raffleData.prizes || []);
       }
     } else {
-      setEventName('');
+      setEventName(type === 'activity' ? 'Событие' : 'Розыгрыш');
       setStartTime('');
       setEndTime('');
       setEventRule('');
@@ -65,18 +72,53 @@ function CreateEventDialog(props: CreateEventDialogProps) {
       name: eventName,
       start: startTime,
       end: endTime,
+      prizes: prizes,
     };
 
-    const eventData = type === 'raffle'
-      ? { ...baseEventData, rule: eventRule, duration }
-      : baseEventData;
+    const eventData =
+      type === 'raffle'
+        ? ({ ...baseEventData, rule: eventRule, duration, prizes: prizes } satisfies Raffle)
+        : baseEventData;
 
     onClose(eventData);
   };
 
-  const isSaveDisabled = type === 'raffle'
-    ? !eventName.trim() || !startTime.trim() || !endTime.trim() || !eventRule.trim() || !duration.trim()
-    : !eventName.trim() || !startTime.trim() || !endTime.trim();
+  const isSaveDisabled =
+    type === 'raffle'
+      ? !eventName.trim() ||
+        !startTime.trim() ||
+        !endTime.trim() ||
+        !eventRule.trim() ||
+        !duration.trim()
+      : !eventName.trim() || !startTime.trim() || !endTime.trim();
+
+  function addPrize(): void {
+    setShowPrizeEditing(true);
+    const newPrize: Prize = {
+      id: null,
+      name: '',
+      cover: null,
+    };
+    setCurrentPrize(newPrize);
+  }
+
+  function handleSaveCurrentPrize(prize: Prize | null): void {
+    if (!prize) return;
+
+    if (prize.id) {
+      setPrizes(prev =>
+        prev.map(p => {
+          if (p.id === prize.id) {
+            return { ...p, name: prize.name, cover: prize.cover };
+          }
+          return p;
+        })
+      );
+    } else {
+      const newId = uuidv4();
+      setPrizes(prev => [...prev, { id: newId, name: prize.name || '', cover: prize.cover }]);
+    }
+  }
 
   return (
     <Dialog
@@ -89,7 +131,8 @@ function CreateEventDialog(props: CreateEventDialogProps) {
       <div className="min-w-[560px] flex flex-col p-[24px] bg-[#ECE6F0]">
         <div className="flex flex-col gap-[16px]">
           <span className="self-center text-[24px] leading-[32px]">
-            {data ? 'Редактирование' : 'Создание'} {type === 'activity' ? 'события расписания' : 'розыгрыша'}
+            {data ? 'Редактирование' : 'Создание'}{' '}
+            {type === 'activity' ? 'события расписания' : 'розыгрыша'}
           </span>
           <span className="text-[14px] leading-[20px]">
             A dialog is a type of modal window that appears in front of app content to provide
@@ -145,15 +188,145 @@ function CreateEventDialog(props: CreateEventDialogProps) {
           </div>
 
           {type === 'raffle' && (
-            <TextField
-              required
-              id="duration"
-              value={duration}
-              label="Длительность"
-              variant="outlined"
-              onChange={e => setDuration(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
+            <>
+              <TextField
+                required
+                id="duration"
+                value={duration}
+                label="Длительность розыгрыша"
+                variant="outlined"
+                onChange={e => setDuration(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+              />
+
+              <div className="text-fg-primary text-[22px] leading-[28px]">Призы</div>
+
+              {!showPrizeEditing &&
+                prizes.map((prize, index) => (
+                  <div className="flex min-h-[68px] justify-between" key={index}>
+                    <div className="flex flex-col justify-between">
+                      <div>Приз {index + 1}</div>
+                      <div>{prize.name}</div>
+                    </div>
+                    <div className="self-end">
+                      <Fab
+                        size="small"
+                        onClick={() => {
+                          setShowPrizeEditing(true);
+                          setCurrentPrize(prize);
+                        }}
+                        sx={{
+                          boxShadow: 'none',
+                          backgroundColor: 'transparent',
+                          ':hover': {
+                            backgroundColor: 'transparent',
+                            boxShadow: 'none',
+                          },
+                        }}
+                      >
+                        <CreateOutlined className="cursor-pointer" />
+                      </Fab>
+                      <Fab
+                        size="small"
+                        onClick={() => {
+                          setPrizes(prev => prev.filter(p => p.id !== prize.id));
+                        }}
+                        sx={{
+                          boxShadow: 'none',
+                          backgroundColor: 'transparent',
+                          ':hover': {
+                            backgroundColor: 'transparent',
+                            boxShadow: 'none',
+                          },
+                        }}
+                      >
+                        <DeleteOutline className="cursor-pointer" />
+                      </Fab>
+                    </div>
+                  </div>
+                ))}
+
+              {showPrizeEditing && (
+                <div className="flex flex-col gap-[20px]">
+                  <div>Приз {prizes.findIndex(prize => prize.id === currentPrize?.id) + 1}</div>
+                  <TextField
+                    required
+                    id="prizeName"
+                    label="Название приза"
+                    variant="outlined"
+                    fullWidth
+                    value={currentPrize?.name}
+                    onChange={e => {
+                      const name = e.target.value;
+                      setCurrentPrize(prev => (prev ? { ...prev, name } : null));
+                    }}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <Button
+                    variant="contained"
+                    color="info"
+                    className="!rounded-full min-w-[163px] max-w-[256px] min-h-[40px] text-fg-button-secondary"
+                    startIcon={!currentPrize?.cover ? <CloudDownload /> : <Autorenew />}
+                    component="label"
+                  >
+                    <span className="normal-case ">
+                      {currentPrize?.cover ? 'Изменить обложку приза' : 'Загрузите обложку приза'}
+                    </span>
+                    <input
+                      type="file"
+                      hidden
+                      onInput={e => {
+                        e.preventDefault();
+                        if (currentPrize) {
+                          const file = e.currentTarget.files?.[0];
+                          console.log(file);
+                          if (file) {
+                            setCurrentPrize(prev => (prev ? { ...prev, cover: file } : null));
+                          }
+                        }
+                      }}
+                    />
+                  </Button>
+                  <span className="text-xs mt-1">Лучше всего размер 318х456 px</span>
+
+                  <div className="flex gap-[8px] self-end">
+                    <Button
+                      variant="text"
+                      color="primary"
+                      className="!rounded-full min-w-[75px] min-h-[40px]"
+                      onClick={() => {
+                        setShowPrizeEditing(false);
+                        setCurrentPrize(null);
+                      }}
+                    >
+                      <span className="normal-case">Отмена</span>
+                    </Button>
+                    <Button
+                      variant="text"
+                      className="!rounded-full min-w-[75px] min-h-[40px]"
+                      onClick={() => {
+                        handleSaveCurrentPrize(currentPrize);
+                        setShowPrizeEditing(false);
+                        setCurrentPrize(null);
+                      }}
+                    >
+                      <span className="normal-case">Сохранить приз</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <Button
+                variant="contained"
+                onClick={addPrize}
+                color="primary"
+                className="!rounded-full w-fit min-h-[40px] text-fg-button-primary"
+                startIcon={<Add />}
+                component="label"
+              >
+                <span className="normal-case ">Добавить приз</span>
+              </Button>
+            </>
           )}
         </form>
 

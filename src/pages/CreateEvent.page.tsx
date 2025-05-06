@@ -1,15 +1,18 @@
 import TopBar from '../components/TopBar.tsx';
 import FirstStepPage from './createEvent/FirstStep.page.tsx';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import SecondStepPage from './createEvent/SecondStep.page.tsx';
-import { useState } from 'react';
-import { GeneralEventInfo } from '../types';
-import { Activity } from '../types/activity.type';
-import { Raffle } from '../types/raffle.type';
+import { useState, useEffect } from 'react';
+import { Event } from '../types';
+import { ActivityList } from '../types/activity.type';
+import { RaffleList } from '../types/raffle.type';
+import { DateTime } from 'luxon';
 
 function CreateEventPage() {
-  const [generalInfo, setGeneralInfo] = useState<GeneralEventInfo>({
-    eventName: '',
+  const location = useLocation();
+
+  const [generalInfo, setGeneralInfo] = useState<Event>({
+    title: '',
     eventDate: null,
     eventTime: '',
     date: null,
@@ -17,14 +20,30 @@ function CreateEventPage() {
     longDescription: '',
     address: '',
     cover: null,
+    activities: [],
+    raffles: [],
+    status: 'draft',
+    id: '',
   });
-  const [facts, setFacts] = useState<Activity[]>([]);
-  const [giveaways, setGiveaways] = useState<Raffle[]>([]);
+  const [facts, setFacts] = useState<ActivityList>([]);
+  const [giveaways, setGiveaways] = useState<RaffleList>([]);
+
+  useEffect(() => {
+    if (location.state) {
+      console.log('Данные из состояния:', location.state);
+      const eventData = location.state as Event;
+      const date = DateTime.fromFormat(eventData.eventDate || '', 'dd.mm.yyyy');
+      console.log('Parsed date:', date.isValid);
+      setGeneralInfo({ ...eventData, eventDate: date });
+      setFacts(eventData.activities || []);
+      setGiveaways(eventData.raffles || []);
+    }
+  }, [location.state]);
 
   const handleSubmit = async () => {
-    const { eventName, address, cover, date, longDescription, shortDescription } = generalInfo;
+    const { title, address, cover, date, longDescription, shortDescription } = generalInfo;
     const eventData = {
-      eventName,
+      title,
       date,
       shortDescription,
       longDescription,
@@ -52,10 +71,10 @@ function CreateEventPage() {
             path="/second"
             element={
               <SecondStepPage
-                facts={facts}
-                setFacts={setFacts}
-                giveaways={giveaways}
-                setGiveaways={setGiveaways}
+                activityList={facts}
+                setActivityList={setFacts}
+                raffleList={giveaways}
+                setRaffleList={setGiveaways}
                 onSubmit={handleSubmit}
               />
             }

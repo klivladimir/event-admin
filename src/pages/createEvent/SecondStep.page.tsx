@@ -1,29 +1,34 @@
 import { Add, CreateOutlined, DeleteOutline } from '@mui/icons-material';
-import { Button, Fab, List, ListItem } from '@mui/material';
+import { Button, Fab, List } from '@mui/material';
 import React from 'react';
 import CreateEventDialog from '../../dialogs/CreateEvent.dialog';
 import { Activity, Raffle } from '../../types';
+import { v4 as uuidv4 } from 'uuid';
+import { ActivityList } from '../../types/activity.type';
+import { RaffleList } from '../../types/raffle.type';
+import CustomListItem from '../../components/CustomListItem';
 
 function SecondStepPage({
-  facts: activities,
-  setFacts: setActivities,
-  giveaways: raffles,
-  setGiveaways: setRaffles,
+  activityList,
+  setActivityList,
+  raffleList,
+  setRaffleList,
   onSubmit,
 }: {
-  facts: Activity[];
-  setFacts: React.Dispatch<React.SetStateAction<Activity[]>>;
-  giveaways: Raffle[];
-  setGiveaways: React.Dispatch<React.SetStateAction<Raffle[]>>;
+  activityList: ActivityList;
+  setActivityList: React.Dispatch<React.SetStateAction<ActivityList>>;
+  raffleList: RaffleList;
+  setRaffleList: React.Dispatch<React.SetStateAction<RaffleList>>;
   onSubmit: () => void;
 }) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [dialogType, setDialogType] = React.useState<'activity' | 'raffle'>('activity');
   const [selectedItem, setSelectedItem] = React.useState<Activity | Raffle | null>(null);
 
-  const isSaveDisabled = activities.length === 0 && raffles.length === 0;
+  const isSaveDisabled = activityList.length === 0 && raffleList.length === 0;
 
   const handleClickOpen = (type: 'activity' | 'raffle', item?: Activity | Raffle) => {
+    console.log([raffleList, activityList]);
     setDialogType(type);
     setIsDialogOpen(true);
     if (item) {
@@ -40,21 +45,23 @@ function SecondStepPage({
 
     if (dialogType === 'activity') {
       if (selectedItem) {
-        setActivities(prev =>
-          prev.map(activity => (activity.id === (selectedItem as Activity).id ? { ...activity, ...data } : activity))
+        setActivityList(prev =>
+          prev.map(activity =>
+            activity.id === (selectedItem as Activity).id ? { ...activity, ...data } : activity
+          )
         );
       } else {
         const activityData = data as Activity;
-        setActivities(prev => [...prev, { ...activityData, id: String(prev.length + 1) }]);
+        setActivityList(prev => [...prev, { ...activityData, id: uuidv4() }]);
       }
     } else {
       if (selectedItem) {
-        setRaffles(prev =>
+        setRaffleList(prev =>
           prev.map(raffle => (raffle.id === selectedItem.id ? { ...raffle, ...data } : raffle))
         );
       } else {
         const raffleData = data as Raffle;
-        setRaffles(prev => [...prev, { ...raffleData, id: String(prev.length + 1) }]);
+        setRaffleList(prev => [...prev, { ...raffleData, id: uuidv4() }]);
       }
     }
     setSelectedItem(null);
@@ -78,7 +85,8 @@ function SecondStepPage({
         <div className="mt-[51px] flex flex-col gap-[4px]">
           <span className="text-[22px] leading-[28px]">Программа ивента</span>
           <span className="text-[14px] leading-[20px]">
-            Расписание ваших активностей. Для создания ивента надо создать хотя бы один розыгрыш или событие
+            Расписание ваших активностей. Для создания ивента надо создать хотя бы один розыгрыш или
+            событие
           </span>
         </div>
 
@@ -114,70 +122,76 @@ function SecondStepPage({
       </div>
 
       <div className="flex flex-col gap-[18px] pl-[40px]">
-        {(activities.length > 0 || raffles.length > 0) && (
+        {(activityList.length > 0 || raffleList.length > 0) && (
           <List>
-            {[...activities, ...raffles].map((item: Activity | Raffle) => (
-              <ListItem
-                key={item.id}
-                sx={{
-                  backgroundColor: '#FEF7FF',
-                  height: '72px',
-                  padding: '8px 16px 0 16px',
-                  alignItems: 'end'
-                }}
-              >
-                <div className="flex w-full justify-between items-center border-b-[1px] border-b-[#CAC4D0]">
-                  <div className="flex flex-col pb-[8px] gap-[4px]">
-                    <span className="text-[16px] leading-[24px] text-fg-primary">{item.name}</span>
-                    <span className="text-[14px] leading-[20px] text-fg-secondary">
-                      {item.start} - {item.end}
-                    </span>
-                  </div>
-                  <div className="actions flex pb-[8px] pr-[40px]">
-                    <Fab
-                      size='small'
-                      onClick={() => {
-                        if ('duration' in item) {
-                          handleClickOpen('raffle', item)
-                        } else {
-                          handleClickOpen('activity', item)
-                        }
-                      }}
-                      sx={{
-                        boxShadow: 'none',
-                        backgroundColor: 'transparent',
-                        ':hover': {
-                          backgroundColor: 'transparent',
-                          boxShadow: 'none',
-                        },
-                      }}
-                    >
-                      <CreateOutlined className="cursor-pointer" />
-                    </Fab>
-                    <Fab
-                      size='small'
-                      onClick={() => {
-                        if ('duration' in item) {
-                          setRaffles(prev => prev.filter(r => r.id !== item.id));
-                        } else {
-                          setActivities(prev => prev.filter(a => a.id !== item.id));
-                        }
-                      }}
-                      sx={{
-                        boxShadow: 'none',
-                        backgroundColor: 'transparent',
-                        ':hover': {
-                          backgroundColor: 'transparent',
-                          boxShadow: 'none',
-                        },
-                      }}
-                    >
-                      <DeleteOutline className="cursor-pointer" />
-                    </Fab>
-                  </div>
+            {[...activityList, ...raffleList]
+
+              .sort((a, b) => {
+                const startA = Number(a.start?.replace(/:/g, ''));
+                const startB = Number(b.start?.replace(/:/g, ''));
+
+                return startA - startB;
+              })
+              .map((item: Activity | Raffle) => (
+                <div key={item.id}>
+                  <CustomListItem
+                    leftContent={
+                      <>
+                        <span className="text-[16px] leading-[24px] text-fg-primary">
+                          {item.name}
+                        </span>
+                        <span className="text-[14px] leading-[20px] text-fg-secondary">
+                          {item.start} - {item.end}
+                        </span>
+                      </>
+                    }
+                    rightContent={
+                      <>
+                        <Fab
+                          size="small"
+                          onClick={() => {
+                            if ('duration' in item) {
+                              handleClickOpen('raffle', item);
+                            } else {
+                              handleClickOpen('activity', item);
+                            }
+                          }}
+                          sx={{
+                            boxShadow: 'none',
+                            backgroundColor: 'transparent',
+                            ':hover': {
+                              backgroundColor: 'transparent',
+                              boxShadow: 'none',
+                            },
+                          }}
+                        >
+                          <CreateOutlined className="cursor-pointer" />
+                        </Fab>
+                        <Fab
+                          size="small"
+                          onClick={() => {
+                            if ('duration' in item) {
+                              setRaffleList(prev => prev.filter(r => r.id !== item.id));
+                            } else {
+                              setActivityList(prev => prev.filter(a => a.id !== item.id));
+                            }
+                          }}
+                          sx={{
+                            boxShadow: 'none',
+                            backgroundColor: 'transparent',
+                            ':hover': {
+                              backgroundColor: 'transparent',
+                              boxShadow: 'none',
+                            },
+                          }}
+                        >
+                          <DeleteOutline className="cursor-pointer" />
+                        </Fab>
+                      </>
+                    }
+                  />
                 </div>
-              </ListItem>
-            ))}
+              ))}
           </List>
         )}
       </div>

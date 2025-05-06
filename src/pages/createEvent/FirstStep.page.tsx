@@ -12,8 +12,8 @@ function FirstStepPage({
   form,
   setForm,
 }: {
-  form: import('../../types').GeneralEventInfo;
-  setForm: React.Dispatch<React.SetStateAction<import('../../types').GeneralEventInfo>>;
+  form: import('../../types').Event;
+  setForm: React.Dispatch<React.SetStateAction<import('../../types').Event>>;
 }) {
   const startTimeInputRef = useMaskito({ options: timeMask });
 
@@ -26,7 +26,10 @@ function FirstStepPage({
       const date = form.eventDate;
       if (luxon.DateTime.isDateTime(date)) {
         const formattedDate = date
-          .set({ hour: Number((value as string).split(':')[0]), minute: Number((value as string).split(':')[1]) })
+          .set({
+            hour: Number((value as string).split(':')[0]),
+            minute: Number((value as string).split(':')[1]),
+          })
           .toISO();
         setForm(prev => ({ ...prev, date: formattedDate }));
       }
@@ -41,7 +44,7 @@ function FirstStepPage({
   };
 
   const isNextStepDisabled =
-    !form.eventName ||
+    !form.title ||
     !form.eventDate ||
     !form.eventTime ||
     !form.shortDescription ||
@@ -72,7 +75,7 @@ function FirstStepPage({
           variant="outlined"
           fullWidth
           helperText="Это публичное название. Его все увидят"
-          value={form.eventName}
+          value={form.title}
           onChange={e => handleChange('eventName', e.target.value)}
           onBlur={e => handleChange('eventName', e.target.value)}
         />
