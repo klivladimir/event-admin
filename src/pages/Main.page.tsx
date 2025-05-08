@@ -1,4 +1,4 @@
-import { Button, ButtonGroup, CircularProgress, List } from '@mui/material';
+import { Button, ButtonGroup, CircularProgress, List, Box } from '@mui/material';
 import Add from '@mui/icons-material/Add';
 import { useState, useMemo, useCallback } from 'react';
 import { ArrowDropDown, ArrowDropUp, Check } from '@mui/icons-material';
@@ -54,8 +54,13 @@ function MainPage() {
       return (
         <>
           <Button
-            className="!rounded-full w-fit max-h-[32px] !bg-[#5D48AF] !text-white"
+            className="!rounded-full max-h-[32px] fill-primary !text-white"
             variant="contained"
+            disableElevation
+            sx={{
+              minWidth: '160px',
+              width: { xs: '100%', sm: 'fit-content' },
+            }}
           >
             <span className="normal-case">Запустить ивент</span>
           </Button>
@@ -64,39 +69,75 @@ function MainPage() {
     }
     if (event.status === 'current') {
       return (
-        <div className="flex gap-2">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-end', sm: 'center' },
+            gap: 2,
+            width: { xs: '100%', sm: 'fit-content' },
+          }}
+        >
           <Button
-            className="!rounded-full w-fit max-h-[32px] !bg-transparent text-fg-secondary"
-            variant="contained"
+            className="!rounded-full max-h-[32px] !bg-transparent text-fg-secondary cursor-pointer"
+            variant="outlined"
+            sx={{
+              minWidth: '165px',
+              width: { xs: '100%', sm: 'fit-content' },
+            }}
           >
-            <span className="normal-case">Завершить ивент</span>
+            <span className="normal-case text-primary">Завершить ивент</span>
           </Button>
 
           <Button
-            className="!rounded-full w-fit max-h-[32px] !bg-[#14AE5C] !text-white"
+            className="!rounded-full max-h-[32px] !bg-[#14AE5C] !text-white"
             variant="contained"
+            disableElevation
+            sx={{
+              minWidth: '192px',
+              width: { xs: '100%', sm: 'fit-content' },
+            }}
           >
             <span className="normal-case">Запустить розыгрыш</span>
           </Button>
-        </div>
+        </Box>
       );
     }
 
     if (event.status === 'past') {
       return (
-        <div className="flex gap-2">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-end', sm: 'center' },
+            gap: 2,
+            width: { xs: '100%', sm: 'fit-content' },
+          }}
+        >
           <Button
-            className="!rounded-full w-fit max-h-[32px] !bg-transparent text-fg-secondary"
-            variant="contained"
-            startIcon={showWinnersForEventId === event.id ? <ArrowDropUp /> : <ArrowDropDown />}
+            className="!rounded-full max-h-[32px] text-fg-secondary border border-fg-button-outline"
+            variant="outlined"
+            disableElevation
+            startIcon={
+              showWinnersForEventId === event.id ? (
+                <ArrowDropUp className="fill-primary" />
+              ) : (
+                <ArrowDropDown className="fill-primary" />
+              )
+            }
             onClick={e => {
               e.stopPropagation();
               setShowWinnersForEventId(showWinnersForEventId === event.id ? null : event.id);
             }}
+            sx={{
+              minWidth: '220px',
+              width: { xs: '100%', sm: 'fit-content' },
+            }}
           >
-            <span className="normal-case">Показать победителей</span>
+            <span className="normal-case text-primary">Показать победителей</span>
           </Button>
-        </div>
+        </Box>
       );
     }
 
@@ -123,7 +164,7 @@ function MainPage() {
   const renderWinners = (event: Event) => {
     if (event.status === 'past' && showWinnersForEventId === event.id) {
       return (
-        <div className="p-[16px] bg-[#E8DEF8]">
+        <div className="p-[16px] bg-[#E8DEF8] border-b-[1px] border-b-[#CAC4D0]">
           <div className="text-[14px] leading-[20px] font-semibold mb-1">Победители:</div>
           <div className="text-[14px] leading-[20px]">Приз: iPhone17 Ник: @robot Код: 4567</div>
           <div className="text-[14px] leading-[20px]">Приз: iPhone18 Ник: @kolyan Код: 3232</div>
@@ -134,16 +175,17 @@ function MainPage() {
   };
 
   return (
-    <main className="h-full w-full pt-[40px] pl-[40px]">
+    <main className="h-full w-full pt-[12px] md:pt-[40px] pl-[12px] md:pl-[40px]">
       <div className="flex flex-col gap-[28px]">
         <div className="flex flex-col gap-[28px]">
           <span className="font-[600] text-[28px] leading-[36px]">Админка</span>
           <Button
-            className="!rounded-full w-fit min-h-[40px] !bg-[#5D48AF] !text-white"
+            className="!rounded-full w-[165px] min-h-[40px] fill-primary !text-white"
             variant="contained"
             component={Link}
             to="/create-event"
             startIcon={<Add />}
+            disableElevation
           >
             <span className="normal-case">Создать ивент</span>
           </Button>
@@ -151,7 +193,7 @@ function MainPage() {
 
         <div className="flex flex-col gap-[18px]">
           <span>Список ивентов</span>
-          <ButtonGroup className="min-h-[40px] max-w-[966px] pr-[40px] overflow-x-auto no-scrollbar">
+          <ButtonGroup className="min-h-[40px] py-[4px] overflow-x-auto no-scrollbar">
             {menu.map((item, i) => (
               <Button
                 key={item.key}
@@ -160,6 +202,7 @@ function MainPage() {
                   border: '1px solid',
                   borderColor: '#79747E',
                   minWidth: '170px !important',
+                  maxWidth: '187px',
                 }}
                 startIcon={selectedTab === item.key ? <Check /> : ''}
                 onClick={() => setSelectedTab(item.key)}
@@ -183,7 +226,7 @@ function MainPage() {
                     <CustomListItem
                       height="88px"
                       leftContent={
-                        <div className="xer flex flex-col">
+                        <div className="flex flex-col">
                           {renderEventStatus(event)}
                           <span className="text-[16px] leading-[24px] text-fg-primary font-medium">
                             {event.title}

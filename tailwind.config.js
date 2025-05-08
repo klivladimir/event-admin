@@ -1,8 +1,5 @@
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -12,8 +9,9 @@ export default {
         'fg-secondary': '#49454F',
         'fg-button-primary': '#ffffff',
         'fg-button-secondary': '#4A4459',
+        'fg-button-outline': '#79747E',
       },
     },
   },
   plugins: [],
-}
+};

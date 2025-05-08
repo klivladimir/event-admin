@@ -60,7 +60,7 @@ function CreateEventPage() {
   return (
     <>
       <TopBar />
-      <div className="flex flex-col gap-[28px]">
+      <div className="flex flex-col gap-[49px]">
         <Routes>
           <Route path="/" element={<Navigate to="first" />} />
           <Route

@@ -1,3 +1,4 @@
+import './CreateEvent.css';
 import { useMaskito } from '@maskito/react';
 import { Button, Dialog, Fab, TextField } from '@mui/material';
 import { useState, useEffect } from 'react';
@@ -128,8 +129,8 @@ function CreateEventDialog(props: CreateEventDialogProps) {
         backgroundColor: '#A3A3A3',
       }}
     >
-      <div className="min-w-[560px] flex flex-col p-[24px] bg-[#ECE6F0]">
-        <div className="flex flex-col gap-[16px]">
+      <div className="flex flex-col p-[24px] md:px-[44px] bg-[#ECE6F0] md:min-w-[560px]">
+        <div className="flex flex-col gap-[16px] text-center">
           <span className="self-center text-[24px] leading-[32px]">
             {data ? 'Редактирование' : 'Создание'}{' '}
             {type === 'activity' ? 'события расписания' : 'розыгрыша'}
@@ -140,7 +141,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
           </span>
         </div>
 
-        <form className="flex flex-col gap-[44px] mt-[24px] px-[20px]">
+        <form className="flex flex-col gap-[44px] mt-[24px] px-0">
           <TextField
             required
             autoFocus={true}
@@ -151,6 +152,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
             variant="outlined"
             fullWidth
             InputLabelProps={{ shrink: true }}
+            inputProps={{ autoComplete: 'off' }}
           />
 
           {type === 'raffle' && (
@@ -163,6 +165,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
               fullWidth
               onChange={e => setEventRule(e.target.value)}
               InputLabelProps={{ shrink: true }}
+              inputProps={{ autoComplete: 'off' }}
             />
           )}
 
@@ -175,6 +178,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
               onBlur={e => setStartTime(e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
+              inputProps={{ autoComplete: 'off' }}
             />
             <TextField
               id="end-time"
@@ -184,6 +188,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
               onBlur={e => setEndTime(e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
+              inputProps={{ autoComplete: 'off' }}
             />
           </div>
 
@@ -197,6 +202,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
                 variant="outlined"
                 onChange={e => setDuration(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                inputProps={{ autoComplete: 'off' }}
               />
 
               <div className="text-fg-primary text-[22px] leading-[28px]">Призы</div>
@@ -206,7 +212,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
                   <div className="flex min-h-[68px] justify-between" key={index}>
                     <div className="flex flex-col justify-between">
                       <div>Приз {index + 1}</div>
-                      <div>{prize.name}</div>
+                      <div className="min-h-[40px] flex items-center">{prize.name}</div>
                     </div>
                     <div className="self-end">
                       <Fab
@@ -248,7 +254,12 @@ function CreateEventDialog(props: CreateEventDialogProps) {
 
               {showPrizeEditing && (
                 <div className="flex flex-col gap-[20px]">
-                  <div>Приз {prizes.findIndex(prize => prize.id === currentPrize?.id) + 1}</div>
+                  <div>
+                    Приз{' '}
+                    {currentPrize?.id
+                      ? prizes.findIndex(p => p.id === currentPrize.id) + 1
+                      : prizes.length + 1}
+                  </div>
                   <TextField
                     required
                     id="prizeName"
@@ -261,6 +272,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
                       setCurrentPrize(prev => (prev ? { ...prev, name } : null));
                     }}
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ autoComplete: 'off' }}
                   />
                   <Button
                     variant="contained"
@@ -289,7 +301,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
                   </Button>
                   <span className="text-xs mt-1">Лучше всего размер 318х456 px</span>
 
-                  <div className="flex gap-[8px] self-end">
+                  <div className="flex justify-between self-stretch md:self-end md:gap-[8px]">
                     <Button
                       variant="text"
                       color="primary"
@@ -320,7 +332,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
                 variant="contained"
                 onClick={addPrize}
                 color="primary"
-                className="!rounded-full w-fit min-h-[40px] text-fg-button-primary"
+                className="!rounded-full w-full md:w-fit min-h-[40px] text-fg-button-primary"
                 startIcon={<Add />}
                 component="label"
               >
@@ -330,7 +342,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
           )}
         </form>
 
-        <div className="actions self-end h-[88px] gap-[8px] flex items-center">
+        <div className="actions self-stretch md:self-end h-[88px] flex items-center justify-between md:justify-start md:gap-[8px]">
           <Button
             variant="text"
             color="primary"

@@ -13,21 +13,23 @@ function TopBar() {
           boxShadow: 'none',
         }}
       >
-        <Toolbar>
-          <IconButton
-            component={Link}
-            to="/"
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
+        <Toolbar disableGutters>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingX: '12px',
+              gap: '4px',
+              width: '100%',
+            }}
           >
-            <ArrowBack />
-          </IconButton>
-          <div className="font-[400] text-[22px] leading-[28px] text-fg-primary">
-            Создание ивента
-          </div>
+            <IconButton component={Link} to="/" size="large" color="inherit" aria-label="menu">
+              <ArrowBack />
+            </IconButton>
+            <div className="font-[400] text-[22px] leading-[28px] text-fg-primary">
+              Создание ивента
+            </div>
+          </Box>
         </Toolbar>
       </AppBar>
     </Box>

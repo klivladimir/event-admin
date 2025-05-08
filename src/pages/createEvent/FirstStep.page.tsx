@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { maskitoTimeOptionsGenerator } from '@maskito/kit';
 import { useMaskito } from '@maskito/react';
 import * as luxon from 'luxon';
+import { Event } from '../../types';
 
 const timeMask = maskitoTimeOptionsGenerator({ mode: 'HH:MM' });
 
@@ -12,12 +13,12 @@ function FirstStepPage({
   form,
   setForm,
 }: {
-  form: import('../../types').Event;
-  setForm: React.Dispatch<React.SetStateAction<import('../../types').Event>>;
+  form: Event;
+  setForm: React.Dispatch<React.SetStateAction<Event>>;
 }) {
   const startTimeInputRef = useMaskito({ options: timeMask });
 
-  const handleChange = (field: string, value: unknown) => {
+  const handleChange = (field: keyof Event, value: unknown) => {
     if (field === 'eventDate' && luxon.DateTime.isDateTime(value)) {
       const formattedDate = value?.toISO();
       setForm(prev => ({ ...prev, date: formattedDate }));
@@ -53,7 +54,7 @@ function FirstStepPage({
     !form.cover;
 
   return (
-    <div className="flex flex-col gap-[57px] max-w-[425px] p-[40px]">
+    <div className="flex flex-col gap-[57px] pt-[26px] px-[12px] pb-[12px] md:px-[40px] md:pb-[40px] w-full md:w-[505px]">
       <div className="flex justify-between items-center">
         <span>Шаг 1 из 2</span>
         <Button
@@ -70,14 +71,15 @@ function FirstStepPage({
       <form className="flex flex-col gap-[28px]">
         <TextField
           required
-          id="eventName"
+          id="title"
           label="Название эвента"
           variant="outlined"
           fullWidth
           helperText="Это публичное название. Его все увидят"
           value={form.title}
-          onChange={e => handleChange('eventName', e.target.value)}
-          onBlur={e => handleChange('eventName', e.target.value)}
+          onChange={e => handleChange('title', e.target.value)}
+          onBlur={e => handleChange('title', e.target.value)}
+          inputProps={{ autoComplete: 'off' }}
         />
         <div className="max-w-[312px]">
           <DatePicker
@@ -95,6 +97,7 @@ function FirstStepPage({
                 className="!rounded-full min-w-[163px] max-w-[256px] min-h-[40px] text-fg-button-secondary"
                 startIcon={<CloudDownload />}
                 component="label"
+                disableElevation
               >
                 <span className="normal-case ">Загрузите обложку события</span>
                 <input type="file" hidden onChange={handleFileChange} />
@@ -131,6 +134,7 @@ function FirstStepPage({
           value={form.eventTime}
           onChange={e => handleChange('eventTime', e.target.value)}
           onBlur={e => handleChange('eventTime', e.target.value)}
+          inputProps={{ autoComplete: 'off' }}
         />
         <TextField
           required
@@ -142,6 +146,7 @@ function FirstStepPage({
           value={form.shortDescription}
           onChange={e => handleChange('shortDescription', e.target.value)}
           onBlur={e => handleChange('shortDescription', e.target.value)}
+          inputProps={{ autoComplete: 'off' }}
         />
         <TextField
           required
@@ -153,6 +158,7 @@ function FirstStepPage({
           value={form.longDescription}
           onChange={e => handleChange('longDescription', e.target.value)}
           onBlur={e => handleChange('longDescription', e.target.value)}
+          inputProps={{ autoComplete: 'off' }}
         />
         <TextField
           required
@@ -164,6 +170,7 @@ function FirstStepPage({
           value={form.address}
           onChange={e => handleChange('address', e.target.value)}
           onBlur={e => handleChange('address', e.target.value)}
+          inputProps={{ autoComplete: 'off' }}
         />
       </form>
     </div>

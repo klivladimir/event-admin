@@ -28,7 +28,6 @@ function SecondStepPage({
   const isSaveDisabled = activityList.length === 0 && raffleList.length === 0;
 
   const handleClickOpen = (type: 'activity' | 'raffle', item?: Activity | Raffle) => {
-    console.log([raffleList, activityList]);
     setDialogType(type);
     setIsDialogOpen(true);
     if (item) {
@@ -69,8 +68,8 @@ function SecondStepPage({
 
   return (
     <>
-      <div className="flex flex-col gap-[57px] p-[40px]">
-        <div className="flex justify-between items-center min-w-[425px] max-w-[425px]">
+      <div className="flex flex-col gap-[29px] pt-[26px] px-[12px] pb-[0] md:px-[40px]">
+        <div className="flex justify-between items-center max-w-[450px] mb-[22px]">
           <span>Шаг 2 из 2</span>
           <Button
             variant="contained"
@@ -82,7 +81,7 @@ function SecondStepPage({
             <span className="normal-case">Сохранить</span>
           </Button>
         </div>
-        <div className="mt-[51px] flex flex-col gap-[4px]">
+        <div className="flex flex-col gap-[4px]">
           <span className="text-[22px] leading-[28px]">Программа ивента</span>
           <span className="text-[14px] leading-[20px]">
             Расписание ваших активностей. Для создания ивента надо создать хотя бы один розыгрыш или
@@ -90,13 +89,14 @@ function SecondStepPage({
           </span>
         </div>
 
-        <div className="flex gap-[47px]">
+        <div className="flex flex-col gap-[12px] w-full md:flex-row md:gap-[47px] md:w-fit md:flex-nowrap md:self-start">
           <Button
             onClick={() => handleClickOpen('activity')}
             variant="contained"
             color="info"
             startIcon={<Add />}
             className="!rounded-full min-w-[202px] min-h-[40px] text-fg-button-secondary"
+            disableElevation
           >
             <span className="normal-case">Добавить событие</span>
           </Button>
@@ -106,6 +106,7 @@ function SecondStepPage({
             color="info"
             startIcon={<Add />}
             className="!rounded-full min-w-[202px] min-h-[40px] text-fg-button-secondary"
+            disableElevation
           >
             <span className="normal-case">Добавить розыгрыш</span>
           </Button>
@@ -121,7 +122,7 @@ function SecondStepPage({
         )}
       </div>
 
-      <div className="flex flex-col gap-[18px] pl-[40px]">
+      <div className="flex flex-col gap-[18px] pl-[12px] md:pl-[40px]">
         {(activityList.length > 0 || raffleList.length > 0) && (
           <List>
             {[...activityList, ...raffleList]
@@ -135,6 +136,7 @@ function SecondStepPage({
               .map((item: Activity | Raffle) => (
                 <div key={item.id}>
                   <CustomListItem
+                    keepRowOnSmallScreens={true}
                     leftContent={
                       <>
                         <span className="text-[16px] leading-[24px] text-fg-primary">
