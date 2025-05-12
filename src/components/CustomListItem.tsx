@@ -44,7 +44,7 @@ const CustomListItem: React.FC<CustomListItemProps> = ({
             sx={{
               display: 'flex',
               paddingBottom: '12px',
-              width: keepRowOnSmallScreens ? 'fit-content' : { xs: '100%', sm: 'fit-content' },
+              width: { xs: '100%', md: 'fit-content' },
               justifyContent: { sm: 'flex-end', md: 'initial' },
             }}
           >

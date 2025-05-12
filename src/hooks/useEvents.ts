@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getEvents } from '../api/get-events';
+import { getEvents } from '../api/events';
 import { EventList } from '../types';
 
 export function useEvents() {

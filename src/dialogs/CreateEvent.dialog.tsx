@@ -1,4 +1,3 @@
-import './CreateEvent.css';
 import { useMaskito } from '@maskito/react';
 import { Button, Dialog, Fab, TextField } from '@mui/material';
 import { useState, useEffect } from 'react';

@@ -13,9 +13,9 @@ function MainPage() {
   const menu: { key: Tab; value: string }[] = [
     { key: 'all', value: 'Все' },
     { key: 'past', value: 'Прошедшие' },
-    { key: 'current', value: 'Текущие' },
-    { key: 'planned', value: 'Запланированные' },
-    { key: 'draft', value: 'Черновики' },
+    { key: 'today', value: 'Текущие' },
+    { key: 'next', value: 'Запланированные' },
+    { key: 'pending', value: 'Черновики' },
   ];
 
   const [selectedTab, setSelectedTab] = useState<Tab>('all');
@@ -24,16 +24,16 @@ function MainPage() {
   const navigate = useNavigate();
 
   const filteredEvents = useMemo(() => {
-    return events.filter(event => {
+    return events?.filter(event => {
       switch (selectedTab) {
         case 'past':
           return event.status === 'past';
-        case 'current':
-          return event.status === 'current';
-        case 'planned':
-          return event.status === 'planned';
-        case 'draft':
-          return event.status === 'draft';
+        case 'today':
+          return event.status === 'today';
+        case 'next':
+          return event.status === 'next';
+        case 'pending':
+          return event.status === 'pending';
         default:
           return true;
       }
@@ -42,7 +42,7 @@ function MainPage() {
 
   const handleSelectEvent = useCallback(
     (event: Event) => {
-      if (event.status === 'draft') {
+      if (event.status === 'pending') {
         navigate('/create-event/first', { state: event });
       }
     },
@@ -50,7 +50,7 @@ function MainPage() {
   );
 
   const renderEventButtons = (event: Event) => {
-    if (event.status === 'planned') {
+    if (event.status === 'next') {
       return (
         <>
           <Button
@@ -67,7 +67,7 @@ function MainPage() {
         </>
       );
     }
-    if (event.status === 'current') {
+    if (event.status === 'today') {
       return (
         <Box
           sx={{
@@ -146,15 +146,15 @@ function MainPage() {
 
   const renderEventStatus = (event: Event) => {
     switch (event.status) {
-      case 'planned':
+      case 'next':
         return (
           <span className="text-[14px] leading-[20px] text-fg-secondary">Запланированное</span>
         );
-      case 'current':
+      case 'today':
         return <span className="text-[14px] leading-[20px] text-fg-secondary">Текущее</span>;
       case 'past':
         return <span className="text-[14px] leading-[20px] text-fg-secondary">Прошедшее</span>;
-      case 'draft':
+      case 'pending':
         return <span className="text-[14px] leading-[20px] text-fg-secondary">Черновик</span>;
       default:
         return null;
@@ -229,10 +229,26 @@ function MainPage() {
                         <div className="flex flex-col">
                           {renderEventStatus(event)}
                           <span className="text-[16px] leading-[24px] text-fg-primary font-medium">
-                            {event.title}
+                            {event.name}
                           </span>
                           <span className="text-[14px] leading-[20px] text-fg-secondary">
-                            {event.eventDate} - {event.eventTime}
+                            {event.date
+                              ? new Date(event.date)
+                                  .toLocaleDateString('ru-RU', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                  })
+                                  .replace(/\./g, '.')
+                              : ''}{' '}
+                            -{' '}
+                            {event.startTime
+                              ? typeof event.startTime === 'string'
+                                ? event.startTime.substring(11, 16)
+                                : typeof event.startTime === 'object'
+                                  ? `${event.startTime.hour.toString().padStart(2, '0')}:${event.startTime.minute.toString().padStart(2, '0')}`
+                                  : event.startTime
+                              : ''}
                           </span>
                         </div>
                       }
