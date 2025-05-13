@@ -3,7 +3,7 @@ import FirstStepPage from './createEvent/FirstStep.page.tsx';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import SecondStepPage from './createEvent/SecondStep.page.tsx';
 import { useState, useEffect } from 'react';
-import { Event } from '../types';
+import { EventFormData } from '../types';
 import { ActivityList } from '../types/activity.type';
 import { RaffleList } from '../types/raffle.type';
 import { DateTime } from 'luxon';
@@ -11,19 +11,17 @@ import { DateTime } from 'luxon';
 function CreateEventPage() {
   const location = useLocation();
 
-  const [generalInfo, setGeneralInfo] = useState<Event>({
-    title: '',
+  const [generalInfo, setGeneralInfo] = useState<EventFormData>({
+    name: '',
     eventDate: null,
     eventTime: '',
     date: null,
     shortDescription: '',
-    longDescription: '',
+    description: '',
     address: '',
-    cover: null,
+    image: null,
     activities: [],
     raffles: [],
-    status: 'draft',
-    id: '',
   });
   const [facts, setFacts] = useState<ActivityList>([]);
   const [giveaways, setGiveaways] = useState<RaffleList>([]);
@@ -31,7 +29,7 @@ function CreateEventPage() {
   useEffect(() => {
     if (location.state) {
       console.log('Данные из состояния:', location.state);
-      const eventData = location.state as Event;
+      const eventData = location.state as EventFormData;
       const date = DateTime.fromFormat(eventData.eventDate || '', 'dd.mm.yyyy');
       console.log('Parsed date:', date.isValid);
       setGeneralInfo({ ...eventData, eventDate: date });
@@ -41,7 +39,14 @@ function CreateEventPage() {
   }, [location.state]);
 
   const handleSubmit = async () => {
-    const { title, address, cover, date, longDescription, shortDescription } = generalInfo;
+    const {
+      name: title,
+      address,
+      image: cover,
+      date,
+      description: longDescription,
+      shortDescription,
+    } = generalInfo;
     const eventData = {
       title,
       date,

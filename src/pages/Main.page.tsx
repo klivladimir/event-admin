@@ -1,13 +1,13 @@
 import { Button, ButtonGroup, CircularProgress, List, Box } from '@mui/material';
 import Add from '@mui/icons-material/Add';
-import { useState, useMemo, useCallback } from 'react';
-import { ArrowDropDown, ArrowDropUp, Check } from '@mui/icons-material';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { ArrowDropDown, ArrowDropUp, Check, AccountCircle } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
-import { Event } from '../types';
+import { EventFormData } from '../types';
 import CustomListItem from '../components/CustomListItem';
 import { useEvents } from '../hooks/useEvents';
 
-type Tab = 'all' | Event['status'];
+type Tab = 'all' | EventFormData['status'];
 
 function MainPage() {
   const menu: { key: Tab; value: string }[] = [
@@ -22,6 +22,20 @@ function MainPage() {
   const { events, loading, error } = useEvents();
   const [showWinnersForEventId, setShowWinnersForEventId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [userEmail, setUserEmail] = useState<string | null>(null); // State for user email
+
+  useEffect(() => {
+    const storedEmail = localStorage.getItem('userEmail');
+    if (storedEmail) {
+      setUserEmail(storedEmail);
+    }
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userEmail');
+    navigate('/login');
+  }, [navigate]);
 
   const filteredEvents = useMemo(() => {
     return events?.filter(event => {
@@ -41,7 +55,7 @@ function MainPage() {
   }, [events, selectedTab]);
 
   const handleSelectEvent = useCallback(
-    (event: Event) => {
+    (event: EventFormData) => {
       if (event.status === 'pending') {
         navigate('/create-event/first', { state: event });
       }
@@ -49,7 +63,7 @@ function MainPage() {
     [navigate]
   );
 
-  const renderEventButtons = (event: Event) => {
+  const renderEventButtons = (event: EventFormData) => {
     if (event.status === 'next') {
       return (
         <>
@@ -128,7 +142,9 @@ function MainPage() {
             }
             onClick={e => {
               e.stopPropagation();
-              setShowWinnersForEventId(showWinnersForEventId === event.id ? null : event.id);
+              if (event.id) {
+                setShowWinnersForEventId(showWinnersForEventId === event.id ? null : event.id);
+              }
             }}
             sx={{
               minWidth: '220px',
@@ -144,7 +160,7 @@ function MainPage() {
     return null;
   };
 
-  const renderEventStatus = (event: Event) => {
+  const renderEventStatus = (event: EventFormData) => {
     switch (event.status) {
       case 'next':
         return (
@@ -161,7 +177,7 @@ function MainPage() {
     }
   };
 
-  const renderWinners = (event: Event) => {
+  const renderWinners = (event: EventFormData) => {
     if (event.status === 'past' && showWinnersForEventId === event.id) {
       return (
         <div className="p-[16px] bg-[#E8DEF8] border-b-[1px] border-b-[#CAC4D0]">
@@ -175,7 +191,26 @@ function MainPage() {
   };
 
   return (
-    <main className="h-full w-full pt-[12px] md:pt-[40px] pl-[12px] md:pl-[40px]">
+    <main className="h-full w-full pt-[12px] md:pt-[40px] pl-[12px] md:pl-[40px] pr-[12px] md:pr-[40px]">
+      <div className="flex justify-between items-center h-[48px] mb-[28px]">
+        <div className="flex items-center">
+          <AccountCircle sx={{ color: 'action.active', mr: 1 }} />
+          <span>{userEmail || 'user@example.com'}</span>{' '}
+        </div>
+        <Button
+          variant="text"
+          onClick={handleLogout}
+          sx={{
+            color: 'primary.main',
+            textTransform: 'none',
+            padding: '0px 8px',
+            minWidth: 'auto',
+          }}
+        >
+          Выйти
+        </Button>
+      </div>
+
       <div className="flex flex-col gap-[28px]">
         <div className="flex flex-col gap-[28px]">
           <span className="font-[600] text-[28px] leading-[36px]">Админка</span>
@@ -241,14 +276,7 @@ function MainPage() {
                                   })
                                   .replace(/\./g, '.')
                               : ''}{' '}
-                            -{' '}
-                            {event.startTime
-                              ? typeof event.startTime === 'string'
-                                ? event.startTime.substring(11, 16)
-                                : typeof event.startTime === 'object'
-                                  ? `${event.startTime.hour.toString().padStart(2, '0')}:${event.startTime.minute.toString().padStart(2, '0')}`
-                                  : event.startTime
-                              : ''}
+                            - {event.eventTime ? event.eventTime.substring(0, 5) : ''}
                           </span>
                         </div>
                       }

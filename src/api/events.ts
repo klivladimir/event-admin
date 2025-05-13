@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { Event, EventList } from '../types';
-import { SuccessResponse } from '../types/api.type';
+import { CreateEventRequest, EventFormData, EventList, SuccessResponse } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -9,7 +8,7 @@ if (storedToken) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
 }
 
-export async function getEvents(): Promise<Event[]> {
+export async function getEvents(): Promise<EventFormData[]> {
   try {
     const response = await axios.get<SuccessResponse<EventList>>(`${API_BASE_URL}/list`);
     return response.data.data;
@@ -19,9 +18,9 @@ export async function getEvents(): Promise<Event[]> {
   }
 }
 
-export async function getEventById(id: string): Promise<Event> {
+export async function getEventById(id: string): Promise<EventFormData> {
   try {
-    const response = await axios.get<Event>(`${API_BASE_URL}/api/events/${id}`);
+    const response = await axios.get<EventFormData>(`${API_BASE_URL}/api/events/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching event with ID ${id}:`, error);
@@ -29,31 +28,12 @@ export async function getEventById(id: string): Promise<Event> {
   }
 }
 
-export interface CreateEventData {
-  image: File | null;
-  name: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  shortDescription: string;
-  description: string;
-  address: string;
-}
-
-export async function createEvent(eventData: CreateEventData): Promise<Event> {
+export async function createEvent(eventData: CreateEventRequest): Promise<EventFormData> {
   try {
-    const formData = new FormData();
-
-    // Add all event data to form data
-    Object.keys(eventData).forEach(key => {
-      if (eventData[key] !== null) {
-        formData.append(key, eventData[key]);
-      }
-    });
-
-    const response = await axios.post<SuccessResponse<Event>>(
-      `${API_BASE_URL}/api/admin/event/create`,
-      formData,
+    console.log(`${API_BASE_URL}/create`);
+    const response = await axios.post<SuccessResponse<EventFormData>>(
+      `${API_BASE_URL}/create`,
+      eventData,
       {
         headers: {
           'Content-Type': 'multipart/form-data',

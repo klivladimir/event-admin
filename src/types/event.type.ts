@@ -2,19 +2,20 @@ import { DateTime } from 'luxon';
 import { ActivityList } from './activity.type';
 import { RaffleList } from './raffle.type';
 
-export type Event = {
-  id: string;
-  title: string;
+export type EventFormData = {
+  id?: string;
+  name: string;
   eventDate: DateTime | null;
   eventTime: string;
+  endTime: string;
   date: string | null;
   shortDescription: string;
-  longDescription: string;
+  description: string;
   address: string;
-  cover: File | null;
+  image: File | null;
   activities: ActivityList;
   raffles: RaffleList;
-  status: 'past' | 'current' | 'planned' | 'draft';
+  status?: 'past' | 'today' | 'next' | 'pending';
 };
 
-export type EventList = Event[];
+export type EventList = EventFormData[];
