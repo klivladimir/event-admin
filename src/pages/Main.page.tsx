@@ -3,11 +3,11 @@ import Add from '@mui/icons-material/Add';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { ArrowDropDown, ArrowDropUp, Check, AccountCircle } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
-import { EventFormData } from '../types';
+import { CreateEventResponce, EventFormData } from '../types';
 import CustomListItem from '../components/CustomListItem';
 import { useEvents } from '../hooks/useEvents';
 
-type Tab = 'all' | EventFormData['status'];
+type Tab = 'all' | EventFormData['showStatus'];
 
 function MainPage() {
   const menu: { key: Tab; value: string }[] = [
@@ -41,13 +41,13 @@ function MainPage() {
     return events?.filter(event => {
       switch (selectedTab) {
         case 'past':
-          return event.status === 'past';
+          return event.showStatus === 'past';
         case 'today':
-          return event.status === 'today';
+          return event.showStatus === 'today';
         case 'next':
-          return event.status === 'next';
+          return event.showStatus === 'next';
         case 'pending':
-          return event.status === 'pending';
+          return event.showStatus === 'pending';
         default:
           return true;
       }
@@ -55,8 +55,9 @@ function MainPage() {
   }, [events, selectedTab]);
 
   const handleSelectEvent = useCallback(
-    (event: EventFormData) => {
-      if (event.status === 'pending') {
+    (event: CreateEventResponce) => {
+      if (event.showStatus === 'pending') {
+        localStorage.setItem('currentEventId', event.id.toString());
         navigate('/create-event/first', { state: event });
       }
     },
@@ -64,7 +65,7 @@ function MainPage() {
   );
 
   const renderEventButtons = (event: EventFormData) => {
-    if (event.status === 'next') {
+    if (event.showStatus === 'next') {
       return (
         <>
           <Button
@@ -81,7 +82,7 @@ function MainPage() {
         </>
       );
     }
-    if (event.status === 'today') {
+    if (event.showStatus === 'today') {
       return (
         <Box
           sx={{
@@ -118,7 +119,7 @@ function MainPage() {
       );
     }
 
-    if (event.status === 'past') {
+    if (event.showStatus === 'past') {
       return (
         <Box
           sx={{
@@ -160,8 +161,8 @@ function MainPage() {
     return null;
   };
 
-  const renderEventStatus = (event: EventFormData) => {
-    switch (event.status) {
+  const renderEventStatus = (event: CreateEventResponce) => {
+    switch (event.showStatus) {
       case 'next':
         return (
           <span className="text-[14px] leading-[20px] text-fg-secondary">Запланированное</span>
@@ -178,7 +179,7 @@ function MainPage() {
   };
 
   const renderWinners = (event: EventFormData) => {
-    if (event.status === 'past' && showWinnersForEventId === event.id) {
+    if (event.showStatus === 'past' && showWinnersForEventId === event.id) {
       return (
         <div className="p-[16px] bg-[#E8DEF8] border-b-[1px] border-b-[#CAC4D0]">
           <div className="text-[14px] leading-[20px] font-semibold mb-1">Победители:</div>
@@ -276,7 +277,7 @@ function MainPage() {
                                   })
                                   .replace(/\./g, '.')
                               : ''}{' '}
-                            - {event.eventTime ? event.eventTime.substring(0, 5) : ''}
+                            - {event.startTime ? event.startTime.substring(11, 16) : ''}
                           </span>
                         </div>
                       }

@@ -1,33 +1,32 @@
 import { Add, CreateOutlined, DeleteOutline } from '@mui/icons-material';
 import { Button, Fab, List } from '@mui/material';
-import React from 'react';
-import CreateEventDialog from '../../dialogs/CreateEvent.dialog';
-import { Activity, Raffle } from '../../types';
-import { v4 as uuidv4 } from 'uuid';
-import { ActivityList } from '../../types/activity.type';
-import { RaffleList } from '../../types/raffle.type';
+import React, { useEffect } from 'react';
+import { deleteRaffle, deleteSubEvent } from '../../api/events';
 import CustomListItem from '../../components/CustomListItem';
+import CreateEventDialog from '../../dialogs/CreateEvent.dialog';
+import { Raffle, SubEvent } from '../../types';
+import { RaffleList } from '../../types/raffle.type';
+import { SubEventList } from '../../types/subEvent.type';
 
 function SecondStepPage({
-  activityList,
-  setActivityList,
+  subEventsList,
   raffleList,
-  setRaffleList,
+  updateSubEventList,
   onSubmit,
 }: {
-  activityList: ActivityList;
-  setActivityList: React.Dispatch<React.SetStateAction<ActivityList>>;
+  subEventsList: SubEventList;
+
   raffleList: RaffleList;
-  setRaffleList: React.Dispatch<React.SetStateAction<RaffleList>>;
+  updateSubEventList: React.Dispatch<unknown>;
   onSubmit: () => void;
 }) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [dialogType, setDialogType] = React.useState<'activity' | 'raffle'>('activity');
-  const [selectedItem, setSelectedItem] = React.useState<Activity | Raffle | null>(null);
+  const [selectedItem, setSelectedItem] = React.useState<SubEvent | Raffle | null>(null);
 
-  const isSaveDisabled = activityList.length === 0 && raffleList.length === 0;
+  const isSaveDisabled = subEventsList.length === 0 && raffleList.length === 0;
 
-  const handleClickOpen = (type: 'activity' | 'raffle', item?: Activity | Raffle) => {
+  const handleClickOpen = (type: 'activity' | 'raffle', item?: SubEvent | Raffle) => {
     setDialogType(type);
     setIsDialogOpen(true);
     if (item) {
@@ -35,36 +34,15 @@ function SecondStepPage({
     }
   };
 
-  const handleClose = (data?: Activity | Raffle) => {
-    setIsDialogOpen(false);
-    if (!data) {
-      setSelectedItem(null);
-      return;
-    }
+  useEffect(() => {
+    updateSubEventList(null);
+  }, []);
 
-    if (dialogType === 'activity') {
-      if (selectedItem) {
-        setActivityList(prev =>
-          prev.map(activity =>
-            activity.id === (selectedItem as Activity).id ? { ...activity, ...data } : activity
-          )
-        );
-      } else {
-        const activityData = data as Activity;
-        setActivityList(prev => [...prev, { ...activityData, id: uuidv4() }]);
-      }
-    } else {
-      if (selectedItem) {
-        setRaffleList(prev =>
-          prev.map(raffle => (raffle.id === selectedItem.id ? { ...raffle, ...data } : raffle))
-        );
-      } else {
-        const raffleData = data as Raffle;
-        setRaffleList(prev => [...prev, { ...raffleData, id: uuidv4() }]);
-      }
-    }
+  async function handleClose() {
+    setIsDialogOpen(false);
     setSelectedItem(null);
-  };
+    updateSubEventList(null);
+  }
 
   return (
     <>
@@ -118,22 +96,36 @@ function SecondStepPage({
             onClose={handleClose}
             type={dialogType}
             data={selectedItem}
+            raffleList={raffleList}
+            onUpdate={() => updateSubEventList(null)}
           />
         )}
       </div>
 
       <div className="flex flex-col gap-[18px] pl-[12px] md:pl-[40px]">
-        {(activityList.length > 0 || raffleList.length > 0) && (
+        {(subEventsList.length > 0 || raffleList.length > 0) && (
           <List>
-            {[...activityList, ...raffleList]
+            {[...subEventsList, ...raffleList]
 
               .sort((a, b) => {
-                const startA = Number(a.start?.replace(/:/g, ''));
-                const startB = Number(b.start?.replace(/:/g, ''));
+                const getNumericTime = (dateTimeStr?: string): number => {
+                  if (!dateTimeStr) {
+                    return NaN;
+                  }
+                  const timePart = dateTimeStr.substring(11);
+                  return Number(timePart.replace(/:/g, ''));
+                };
 
-                return startA - startB;
+                const numTimeA = getNumericTime(a.startTime);
+                const numTimeB = getNumericTime(b.startTime);
+
+                if (isNaN(numTimeA) && isNaN(numTimeB)) return 0;
+                if (isNaN(numTimeA)) return 1;
+                if (isNaN(numTimeB)) return -1;
+
+                return numTimeA - numTimeB;
               })
-              .map((item: Activity | Raffle) => (
+              .map((item: SubEvent | Raffle) => (
                 <div key={item.id}>
                   <CustomListItem
                     keepRowOnSmallScreens={true}
@@ -143,7 +135,8 @@ function SecondStepPage({
                           {item.name}
                         </span>
                         <span className="text-[14px] leading-[20px] text-fg-secondary">
-                          {item.start} - {item.end}
+                          {item.startTime ? item.startTime.substring(11, 16) : ''} -
+                          {item.endTime ? item.endTime.substring(11, 16) : ''}
                         </span>
                       </>
                     }
@@ -172,10 +165,14 @@ function SecondStepPage({
                         <Fab
                           size="small"
                           onClick={() => {
-                            if ('duration' in item) {
-                              setRaffleList(prev => prev.filter(r => r.id !== item.id));
+                            if ('duration' in item && item.id) {
+                              deleteRaffle(item.id).then(() => {
+                                updateSubEventList(null);
+                              });
                             } else {
-                              setActivityList(prev => prev.filter(a => a.id !== item.id));
+                              deleteSubEvent(item.id).then(() => {
+                                updateSubEventList(null);
+                              });
                             }
                           }}
                           sx={{

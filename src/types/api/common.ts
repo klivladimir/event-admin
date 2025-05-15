@@ -4,6 +4,13 @@ export interface GenericAdminActionResponse {
 }
 
 export type SuccessResponse<T> = {
-  success: true;
+  success: boolean;
   data: T;
 };
+
+export type ErrorResponse = {
+  success: boolean;
+  errors: Record<string, string>;
+};
+
+export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;

@@ -1,13 +1,13 @@
+import { maskitoTimeOptionsGenerator } from '@maskito/kit';
+import { useMaskito } from '@maskito/react';
 import { CloudDownload, Delete } from '@mui/icons-material';
 import { Button, TextField } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
-import { Link } from 'react-router-dom';
-import { maskitoTimeOptionsGenerator } from '@maskito/kit';
-import { useMaskito } from '@maskito/react';
 import * as luxon from 'luxon';
-import { CreateEventRequest, EventFormData } from '../../types';
-import { createEvent } from '../../api/events';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createOrUpdateEvent } from '../../api/events';
+import { CreateEventRequest, EventFormData } from '../../types';
 
 const timeMask = maskitoTimeOptionsGenerator({ mode: 'HH:MM' });
 
@@ -19,6 +19,7 @@ function FirstStepPage({
   setForm: React.Dispatch<React.SetStateAction<EventFormData>>;
 }) {
   const startTimeInputRef = useMaskito({ options: timeMask });
+  const navigate = useNavigate();
   const endTimeInputRef = useMaskito({ options: timeMask });
   const [endTimeError, setEndTimeError] = useState<string | null>(null);
 
@@ -28,14 +29,14 @@ function FirstStepPage({
     if (field === 'eventDate' && luxon.DateTime.isDateTime(value)) {
       const formattedDate = value?.toISO();
       let newDate = luxon.DateTime.fromISO(formattedDate!);
-      if (form.eventTime) {
-        const [hours, minutes] = form.eventTime.split(':').map(Number);
+      if (form.eventStartTime) {
+        const [hours, minutes] = form.eventStartTime.split(':').map(Number);
         newDate = newDate.set({ hour: hours, minute: minutes });
       }
       setForm(prev => ({ ...prev, date: newDate.toISO(), eventDate: value }));
     }
 
-    if (field === 'eventTime' && typeof value === 'string') {
+    if (field === 'eventStartTime' && typeof value === 'string') {
       const timeValue = value as string;
       setForm(prev => ({ ...prev, eventTime: timeValue }));
       if (form.eventDate && luxon.DateTime.isDateTime(form.eventDate)) {
@@ -43,9 +44,9 @@ function FirstStepPage({
         const updatedDate = form.eventDate.set({ hour: hours, minute: minutes }).toISO();
         setForm(prev => ({ ...prev, date: updatedDate }));
       }
-      if (form.endTime) {
+      if (form.eventEndTime) {
         const startTimeParts = timeValue.split(':').map(Number);
-        const endTimeParts = form.endTime.split(':').map(Number);
+        const endTimeParts = form.eventEndTime.split(':').map(Number);
         const startTimeTotalMinutes = startTimeParts[0] * 60 + startTimeParts[1];
         const endTimeTotalMinutes = endTimeParts[0] * 60 + endTimeParts[1];
         if (endTimeTotalMinutes < startTimeTotalMinutes) {
@@ -56,11 +57,11 @@ function FirstStepPage({
       }
     }
 
-    if (field === 'endTime' && typeof value === 'string') {
+    if (field === 'eventEndTime' && typeof value === 'string') {
       const timeValue = value as string;
       setForm(prev => ({ ...prev, endTime: timeValue }));
-      if (form.eventTime) {
-        const startTimeParts = form.eventTime.split(':').map(Number);
+      if (form.eventEndTime) {
+        const startTimeParts = form.eventEndTime.split(':').map(Number);
         const endTimeParts = timeValue.split(':').map(Number);
         const startTimeTotalMinutes = startTimeParts[0] * 60 + startTimeParts[1];
         const endTimeTotalMinutes = endTimeParts[0] * 60 + endTimeParts[1];
@@ -88,22 +89,24 @@ function FirstStepPage({
     const data = {
       name: form.name,
       date: form.eventDate.toFormat('yyyy-MM-dd'),
-      startTime: form.eventTime,
-      endTime: form.endTime,
+      startTime: form.eventStartTime,
+      endTime: form.eventEndTime,
       shortDescription: form.shortDescription,
       description: form.description,
       address: form.address,
-      image: form.image,
+      image: form.image as File,
     } satisfies CreateEventRequest;
-    console.log('Отправка данных на сервер:', data);
-    createEvent(data);
+
+    createOrUpdateEvent(data).then(() => {
+      navigate('../second');
+    });
   };
 
   const isNextStepDisabled =
     !form.name ||
     !form.eventDate ||
-    !form.eventTime ||
-    !form.endTime ||
+    !form.eventStartTime ||
+    !form.eventEndTime ||
     !form.shortDescription ||
     !form.description ||
     !form.address ||
@@ -117,8 +120,6 @@ function FirstStepPage({
         <Button
           variant="contained"
           color="primary"
-          component={Link}
-          to="../second"
           className="!rounded-full min-w-[163px] min-h-[40px] text-fg-button-primary"
           disabled={isNextStepDisabled}
           onClick={() => handleCreateEvent()}
@@ -158,7 +159,12 @@ function FirstStepPage({
                 disableElevation
               >
                 <span className="normal-case ">Загрузите обложку события</span>
-                <input type="file" hidden onChange={handleFileChange} />
+                <input
+                  type="file"
+                  hidden
+                  onChange={handleFileChange}
+                  accept="image/png, image/jpeg"
+                />
               </Button>
               <span className="text-xs mt-1">Лучше всего размер 1110х468 px</span>
             </div>
@@ -182,31 +188,31 @@ function FirstStepPage({
         </div>
         <TextField
           required
-          id="eventTime"
+          id="eventStartTime"
           label="Время начала ивента"
           variant="outlined"
           inputRef={startTimeInputRef}
           fullWidth
           disabled={!form.eventDate}
           helperText="Это местное время. Того места где вы находитесь"
-          value={form.eventTime}
-          onChange={e => handleChange('eventTime', e.target.value)}
-          onBlur={e => handleChange('eventTime', e.target.value)}
+          value={form.eventStartTime}
+          onChange={e => handleChange('eventStartTime', e.target.value)}
+          onBlur={e => handleChange('eventStartTime', e.target.value)}
           inputProps={{ autoComplete: 'off' }}
           InputLabelProps={{ shrink: true }}
         />
         <TextField
           required
-          id="endTime"
+          id="eventEndTime"
           label="Время окончания ивента"
           variant="outlined"
           inputRef={endTimeInputRef}
           fullWidth
           disabled={!form.eventDate}
           helperText={endTimeError || 'Это местное время. Того места где вы находитесь'}
-          value={form.endTime}
-          onChange={e => handleChange('endTime', e.target.value)}
-          onBlur={e => handleChange('endTime', e.target.value)}
+          value={form.eventEndTime}
+          onChange={e => handleChange('eventEndTime', e.target.value)}
+          onBlur={e => handleChange('eventEndTime', e.target.value)}
           inputProps={{ autoComplete: 'off' }}
           error={!!endTimeError}
           InputLabelProps={{ shrink: true }}

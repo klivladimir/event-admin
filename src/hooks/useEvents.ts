@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getEvents } from '../api/events';
-import { EventList } from '../types';
+import { CreateEventResponce } from '../types';
 
 export function useEvents() {
-  const [events, setEvents] = useState<EventList>([]);
+  const [events, setEvents] = useState<CreateEventResponce[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 

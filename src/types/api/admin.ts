@@ -1,5 +1,5 @@
-import { Activity } from '../activity.type';
-import { EventList } from '../event.type';
+import { SubEvent } from '../subEvent.type';
+import { EventFormData, EventList } from '../event.type';
 import { Prize } from '../prize.type';
 import { Raffle } from '../raffle.type';
 import { GenericAdminActionResponse } from './common';
@@ -24,9 +24,10 @@ export type CreateEventResponce = {
   shortDescription: string;
   description: string;
   address: string;
-  subEvents: Activity[];
+  subEvents: SubEvent[];
   raffles: Raffle[];
-  status: number;
+  showStatus: EventFormData['showStatus'];
+  image: string;
 };
 
 export interface AdminEventListRequestParams {
@@ -37,15 +38,13 @@ export interface AdminEventListResponse {
   items: EventList;
 }
 
-// --- Sub Event (Activity) Management ---
 export interface CreateSubEventRequest {
-  // eventId is a path parameter
   name: string;
   startTime: string;
   endTime: string;
 }
 
-export interface CreateSubEventResponse extends Activity {} // Assuming the created sub-event/activity is returned
+export interface CreateSubEventResponse extends SubEvent {} // Assuming the created sub-event/activity is returned
 
 export interface UpdateSubEventRequest {
   name: string;
@@ -53,27 +52,25 @@ export interface UpdateSubEventRequest {
   endTime: string;
 }
 
-export interface UpdateSubEventResponse extends Activity {} // Assuming the updated sub-event/activity is returned
+export interface UpdateSubEventResponse extends SubEvent {} // Assuming the updated sub-event/activity is returned
 
 export interface DeleteSubEventResponse extends GenericAdminActionResponse {}
 
-// --- Raffle Management ---
 export interface CreateRaffleRequest {
-  // eventId is a path parameter
   name: string;
-  startTime: string; // HH:MM:SS
-  endTime: string; // HH:MM:SS
+  startTime: string;
+  endTime: string;
   terms: string;
-  prizes?: Array<{ name: string; image: File }>; // Optional based on Postman
+  duration: string;
+  prizes?: Array<{ name: string; image: File }>;
 }
 
 export interface CreateRaffleResponse extends Raffle {} // Assuming the created raffle is returned
 
 export interface UpdateRaffleRequest {
-  // eventId and raffleId are path parameters
   name: string;
-  startTime: string; // HH:MM:SS
-  endTime: string; // HH:MM:SS
+  startTime: string;
+  endTime: string;
   terms: string;
 }
 

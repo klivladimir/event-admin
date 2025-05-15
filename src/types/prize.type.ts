@@ -1,7 +1,7 @@
 export type Prize = {
-  id: string | null;
+  id?: string;
   name: string;
-  cover: File | null;
-}
+  image: File | null;
+};
 
 export type PrizeList = Prize[];

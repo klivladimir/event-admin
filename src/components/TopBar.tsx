@@ -23,7 +23,16 @@ function TopBar() {
               width: '100%',
             }}
           >
-            <IconButton component={Link} to="/" size="large" color="inherit" aria-label="menu">
+            <IconButton
+              component={Link}
+              to="/"
+              size="large"
+              color="inherit"
+              aria-label="menu"
+              onClick={() => {
+                localStorage.removeItem('currentEventId');
+              }}
+            >
               <ArrowBack />
             </IconButton>
             <div className="font-[400] text-[22px] leading-[28px] text-fg-primary">
