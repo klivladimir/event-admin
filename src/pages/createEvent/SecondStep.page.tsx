@@ -85,6 +85,7 @@ function SecondStepPage({
             startIcon={<Add />}
             className="!rounded-full min-w-[202px] min-h-[40px] text-fg-button-secondary"
             disableElevation
+            disabled={raffleList.length >= 1}
           >
             <span className="normal-case">Добавить розыгрыш</span>
           </Button>

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar.tsx';
 import { CreateEventResponce, EventFormData, SubEventList } from '../types/index.ts';
 import FirstStepPage from './createEvent/FirstStep.page.tsx';
 import SecondStepPage from './createEvent/SecondStep.page.tsx';
 
 import { DateTime } from 'luxon';
-import { getEventById } from '../api/events.ts';
+import { getEventById, startEvent } from '../api/events.ts';
 import { RaffleList } from '../types/raffle.type.ts';
 
 function CreateEventPage() {
@@ -29,6 +29,7 @@ function CreateEventPage() {
   const [subEventsList, setSubEventsList] = useState<SubEventList>([]);
   const [raffleList, setRaffleList] = useState<RaffleList>([]);
   const [currentEventId, setCurrentEventId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     try {
@@ -76,20 +77,11 @@ function CreateEventPage() {
   }
 
   const handleSubmit = async () => {
-    const { name, address, image, date, description, shortDescription } = generalInfo;
-    const eventData = {
-      name,
-      date,
-      shortDescription,
-      description,
-      address,
-      image,
-      subEvents: subEventsList,
-      raffles: raffleList,
-    };
-    // TODO: заменить на реальный запрос
-    console.log('Отправка данных на сервер:', eventData);
-    // await fetch('/api/events', { method: 'POST', body: JSON.stringify(eventData) });
+    if (currentEventId) {
+      startEvent(currentEventId).then(() => {
+        navigate('/');
+      });
+    }
   };
 
   const updateSubEventList = () => {

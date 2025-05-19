@@ -24,7 +24,7 @@ import {
 } from '../api/events';
 
 const timeMask = maskitoTimeOptionsGenerator({ mode: 'HH:MM' });
-const timeDurationMask = maskitoTimeOptionsGenerator({ mode: 'HH:MM:SS' });
+const timeDurationMask = maskitoTimeOptionsGenerator({ mode: 'MM:SS' });
 
 type DialogType = 'activity' | 'raffle';
 
@@ -58,7 +58,9 @@ function CreateEventDialog(props: CreateEventDialogProps) {
   const [currentPrize, setCurrentPrize] = useState<Prize | null>(null);
   const [showPrizeEditing, setShowPrizeEditing] = useState<boolean>(false);
   const [eventNameError, setEventNameError] = useState(false);
+  const [startTimeError, setStartTimeError] = useState<string | null>(null);
   const [endTimeError, setEndTimeError] = useState<string | null>(null);
+  const [durationError, setDurationError] = useState<string | null>(null);
 
   useEffect(() => {
     setItemData(propsData);
@@ -96,6 +98,20 @@ function CreateEventDialog(props: CreateEventDialogProps) {
       return '';
     };
 
+    const formatDurationToMMSS = (durationInput: string | undefined): string => {
+      if (!durationInput) return '';
+      // Check if already MM:SS
+      if (/^([0-5]\d):([0-5]\d)$/.test(durationInput)) {
+        return durationInput;
+      }
+      // Check and convert from HH:MM:SS
+      if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(durationInput)) {
+        const parts = durationInput.split(':');
+        return `${parts[1]}:${parts[2]}`;
+      }
+      return durationInput; // or return '' if invalid format should be cleared
+    };
+
     if (itemData) {
       setEventName(itemData.name || '');
       setStartTime(formatTimeToHHMM(itemData.startTime));
@@ -104,7 +120,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
         const raffleData = raffleList.find(raffle => raffle.id === itemData?.id);
         setCurrentRaffle(raffleData as Raffle);
         setTerms(raffleData?.terms || '');
-        setDuration(raffleData?.duration || '');
+        setDuration(formatDurationToMMSS(raffleData?.duration));
         setPrizes(raffleData?.prizes || []);
       }
     } else {
@@ -116,7 +132,9 @@ function CreateEventDialog(props: CreateEventDialogProps) {
       setPrizes([]);
     }
     setEventNameError(false);
+    setStartTimeError(null);
     setEndTimeError(null);
+    setDurationError(null);
   }, [itemData, type, raffleList]);
 
   const handleClose = () => {
@@ -126,8 +144,10 @@ function CreateEventDialog(props: CreateEventDialogProps) {
     setTerms('');
     setDuration('');
     setEventNameError(false);
+    setStartTimeError(null);
     setEndTimeError(null);
     setShowPrizeEditing(false);
+    setDurationError(null);
     onClose();
   };
 
@@ -159,14 +179,18 @@ function CreateEventDialog(props: CreateEventDialogProps) {
         !endTime.trim() ||
         !terms.trim() ||
         !duration.trim() ||
-        !!endTimeError
+        !!startTimeError ||
+        !!endTimeError ||
+        !!durationError
       : !eventName.trim() ||
         eventName.trim().length < 2 ||
         !startTime.trim() ||
         !endTime.trim() ||
+        !!startTimeError ||
         !!endTimeError;
 
   function addPrize(): void {
+    console.log(currentRaffle);
     if (!currentRaffle) {
       const data = getResRaffleData();
       createRaffle(data).then(res => {
@@ -187,7 +211,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
       startTime: startTime,
       endTime: endTime,
       terms: terms,
-      duration: duration,
+      duration: duration.length === 5 ? `00:${duration}` : duration,
     };
   };
 
@@ -233,10 +257,25 @@ function CreateEventDialog(props: CreateEventDialogProps) {
   }
 
   const validateTimes = (start: string, end: string) => {
-    if (start && end) {
+    let newStartTimeError: string | null = null;
+    let newEndTimeError: string | null = null;
+
+    if (start) {
+      if (start.length < 5 || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(start)) {
+        newStartTimeError = 'Время начала указано не полностью (ЧЧ:ММ)';
+      }
+    }
+
+    if (end) {
+      if (end.length < 5 || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(end)) {
+        newEndTimeError = 'Время окончания указано не полностью (ЧЧ:ММ)';
+      }
+    }
+
+    if (!newStartTimeError && !newEndTimeError && start && end) {
       const startTimeParts = start.split(':').map(Number);
       const endTimeParts = end.split(':').map(Number);
-      // Basic check for HH:MM format
+
       if (
         startTimeParts.length === 2 &&
         !isNaN(startTimeParts[0]) &&
@@ -247,17 +286,31 @@ function CreateEventDialog(props: CreateEventDialogProps) {
       ) {
         const startTimeTotalMinutes = startTimeParts[0] * 60 + startTimeParts[1];
         const endTimeTotalMinutes = endTimeParts[0] * 60 + endTimeParts[1];
-        if (endTimeTotalMinutes < startTimeTotalMinutes) {
-          setEndTimeError('Время окончания не может быть раньше времени начала');
-        } else {
-          setEndTimeError(null);
+        if (endTimeTotalMinutes <= startTimeTotalMinutes) {
+          newEndTimeError = 'Время окончания не может быть раньше или равно времени начала';
         }
-      } else {
-        setEndTimeError(null);
       }
-    } else {
-      setEndTimeError(null);
     }
+    setStartTimeError(newStartTimeError);
+    setEndTimeError(newEndTimeError);
+  };
+
+  const validateDuration = (durationValue: string) => {
+    let newDurationError: string | null = null;
+    if (durationValue) {
+      if (durationValue.length < 5 || !/^([0-5]\d):([0-5]\d)$/.test(durationValue)) {
+        newDurationError = 'Длительность указана не полностью (ММ:СС)';
+      } else {
+        const parts = durationValue.split(':').map(Number);
+        if (parts.length === 2) {
+          const totalSeconds = parts[0] * 60 + parts[1];
+          if (totalSeconds > 120) {
+            newDurationError = 'Длительность не может превышать 02:00';
+          }
+        }
+      }
+    }
+    setDurationError(newDurationError);
   };
 
   return (
@@ -328,6 +381,8 @@ function CreateEventDialog(props: CreateEventDialogProps) {
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               inputProps={{ autoComplete: 'off' }}
+              error={!!startTimeError}
+              helperText={startTimeError || ''}
             />
             <TextField
               id="end-time"
@@ -352,16 +407,26 @@ function CreateEventDialog(props: CreateEventDialogProps) {
             <>
               <TextField
                 required
-                placeholder="00:00:00"
+                placeholder="00:00"
                 inputRef={durationInputRef}
                 id="duration"
                 value={duration}
                 label="Длительность розыгрыша"
                 variant="outlined"
-                onChange={e => setDuration(e.target.value)}
-                onBlur={e => setDuration(e.target.value)}
+                onChange={e => {
+                  const newDuration = e.target.value;
+                  setDuration(newDuration);
+                  validateDuration(newDuration);
+                }}
+                onBlur={e => {
+                  const newDuration = e.target.value;
+                  setDuration(newDuration);
+                  validateDuration(newDuration);
+                }}
                 InputLabelProps={{ shrink: true }}
                 inputProps={{ autoComplete: 'off' }}
+                error={!!durationError}
+                helperText={durationError || ''}
               />
 
               <div className="text-fg-primary text-[22px] leading-[28px]">Призы</div>
@@ -491,7 +556,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
 
               <Button
                 variant="contained"
-                disabled={isSaveDisabled}
+                disabled={showPrizeEditing}
                 onClick={addPrize}
                 color="primary"
                 className="!rounded-full w-full md:w-fit min-h-[40px] text-fg-button-primary"

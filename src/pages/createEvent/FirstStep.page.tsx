@@ -22,9 +22,15 @@ function FirstStepPage({
   const navigate = useNavigate();
   const endTimeInputRef = useMaskito({ options: timeMask });
   const [endTimeError, setEndTimeError] = useState<string | null>(null);
+  const [startTimeError, setStartTimeError] = useState<string | null>(null);
+  const [eventNameError, setEventNameError] = useState<boolean>(false);
 
   const handleChange = (field: keyof EventFormData, value: unknown) => {
     setForm(prev => ({ ...prev, [field]: value }));
+
+    if (field === 'name' && typeof value === 'string') {
+      setEventNameError(value.trim().length < 2);
+    }
 
     if (field === 'eventDate' && luxon.DateTime.isDateTime(value)) {
       const formattedDate = value?.toISO();
@@ -39,37 +45,57 @@ function FirstStepPage({
     if (field === 'eventStartTime' && typeof value === 'string') {
       const timeValue = value as string;
       setForm(prev => ({ ...prev, eventTime: timeValue }));
+
+      if (timeValue.length < 5) {
+        setStartTimeError('Время начала должно быть заполнено полностью (ЧЧ:ММ)');
+      } else {
+        setStartTimeError(null);
+      }
+
       if (form.eventDate && luxon.DateTime.isDateTime(form.eventDate)) {
         const [hours, minutes] = timeValue.split(':').map(Number);
         const updatedDate = form.eventDate.set({ hour: hours, minute: minutes }).toISO();
         setForm(prev => ({ ...prev, date: updatedDate }));
       }
-      if (form.eventEndTime) {
+      if (form.eventEndTime && timeValue.length === 5 && form.eventEndTime.length === 5) {
         const startTimeParts = timeValue.split(':').map(Number);
         const endTimeParts = form.eventEndTime.split(':').map(Number);
         const startTimeTotalMinutes = startTimeParts[0] * 60 + startTimeParts[1];
         const endTimeTotalMinutes = endTimeParts[0] * 60 + endTimeParts[1];
-        if (endTimeTotalMinutes < startTimeTotalMinutes) {
-          setEndTimeError('Время окончания не может быть раньше времени начала');
+        if (endTimeTotalMinutes <= startTimeTotalMinutes) {
+          setEndTimeError('Время окончания не может быть раньше или равно времени начала');
         } else {
           setEndTimeError(null);
         }
+      } else if (form.eventEndTime && form.eventEndTime.length < 5) {
+        setEndTimeError('Время окончания должно быть заполнено полностью (ЧЧ:ММ)');
+      } else if (form.eventEndTime && timeValue.length === 5 && form.eventEndTime.length === 5) {
+        setEndTimeError(null);
       }
     }
 
     if (field === 'eventEndTime' && typeof value === 'string') {
       const timeValue = value as string;
       setForm(prev => ({ ...prev, endTime: timeValue }));
-      if (form.eventEndTime) {
-        const startTimeParts = form.eventEndTime.split(':').map(Number);
-        const endTimeParts = timeValue.split(':').map(Number);
-        const startTimeTotalMinutes = startTimeParts[0] * 60 + startTimeParts[1];
-        const endTimeTotalMinutes = endTimeParts[0] * 60 + endTimeParts[1];
 
-        if (endTimeTotalMinutes < startTimeTotalMinutes) {
-          setEndTimeError('Время окончания не может быть раньше времени начала');
-        } else {
-          setEndTimeError(null);
+      if (timeValue.length < 5) {
+        setEndTimeError('Время окончания должно быть заполнено полностью (ЧЧ:ММ)');
+      } else {
+        setEndTimeError(null); // Clear length error if format is correct
+        if (form.eventStartTime && form.eventStartTime.length === 5) {
+          const startTimeParts = form.eventStartTime.split(':').map(Number);
+          const endTimeParts = timeValue.split(':').map(Number);
+          const startTimeTotalMinutes = startTimeParts[0] * 60 + startTimeParts[1];
+          const endTimeTotalMinutes = endTimeParts[0] * 60 + endTimeParts[1];
+
+          if (endTimeTotalMinutes <= startTimeTotalMinutes) {
+            setEndTimeError('Время окончания не может быть раньше или равно времени начала');
+          } else {
+            // Explicitly clear if no other error condition is met
+            if (timeValue.length === 5) setEndTimeError(null);
+          }
+        } else if (form.eventStartTime && form.eventStartTime.length < 5) {
+          setStartTimeError('Время начала должно быть заполнено полностью (ЧЧ:ММ)');
         }
       }
     }
@@ -82,11 +108,12 @@ function FirstStepPage({
   };
 
   const handleCreateEvent = () => {
-    if (!form.eventDate || !form.image) {
-      console.error('Form validation failed: eventDate or image is missing.');
+    if (!form.eventDate) {
+      console.error('Form validation failed: eventDate is missing.');
       return;
     }
-    const data = {
+
+    const data: CreateEventRequest = {
       name: form.name,
       date: form.eventDate.toFormat('yyyy-MM-dd'),
       startTime: form.eventStartTime,
@@ -94,8 +121,11 @@ function FirstStepPage({
       shortDescription: form.shortDescription,
       description: form.description,
       address: form.address,
-      image: form.image as File,
-    } satisfies CreateEventRequest;
+    };
+
+    if (form.image instanceof File) {
+      data.image = form.image;
+    }
 
     createOrUpdateEvent(data).then(() => {
       navigate('../second');
@@ -111,7 +141,9 @@ function FirstStepPage({
     !form.description ||
     !form.address ||
     !form.image ||
-    !!endTimeError;
+    !!endTimeError ||
+    !!startTimeError ||
+    eventNameError;
 
   return (
     <div className="flex flex-col gap-[57px] pt-[26px] px-[12px] pb-[12px] md:px-[40px] md:pb-[40px] w-full md:w-[505px]">
@@ -134,11 +166,16 @@ function FirstStepPage({
           label="Название эвента"
           variant="outlined"
           fullWidth
-          helperText="Это публичное название. Его все увидят"
+          helperText={
+            eventNameError
+              ? 'Название должно содержать не менее 2 символов'
+              : 'Это публичное название. Его все увидят'
+          }
           value={form.name}
           onChange={e => handleChange('name', e.target.value)}
           onBlur={e => handleChange('name', e.target.value)}
           inputProps={{ autoComplete: 'off' }}
+          error={eventNameError}
         />
         <div className="max-w-[312px]">
           <DatePicker
@@ -194,12 +231,13 @@ function FirstStepPage({
           inputRef={startTimeInputRef}
           fullWidth
           disabled={!form.eventDate}
-          helperText="Это местное время. Того места где вы находитесь"
+          helperText={startTimeError || 'Это местное время. Того места где вы находитесь'}
           value={form.eventStartTime}
           onChange={e => handleChange('eventStartTime', e.target.value)}
           onBlur={e => handleChange('eventStartTime', e.target.value)}
           inputProps={{ autoComplete: 'off' }}
           InputLabelProps={{ shrink: true }}
+          error={!!startTimeError}
         />
         <TextField
           required

@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CreateEventResponce, EventFormData } from '../types';
 import CustomListItem from '../components/CustomListItem';
 import { useEvents } from '../hooks/useEvents';
+import { startEvent, startRaffle } from '../api/events';
 
 type Tab = 'all' | EventFormData['showStatus'];
 
@@ -76,6 +77,11 @@ function MainPage() {
               minWidth: '160px',
               width: { xs: '100%', sm: 'fit-content' },
             }}
+            onClick={() => {
+              if (event.id) {
+                startEvent(+event.id);
+              }
+            }}
           >
             <span className="normal-case">Запустить ивент</span>
           </Button>
@@ -111,6 +117,11 @@ function MainPage() {
             sx={{
               minWidth: '192px',
               width: { xs: '100%', sm: 'fit-content' },
+            }}
+            onClick={() => {
+              if (event.id) {
+                startRaffle(+event.id);
+              }
             }}
           >
             <span className="normal-case">Запустить розыгрыш</span>

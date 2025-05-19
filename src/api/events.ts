@@ -1,4 +1,4 @@
-import { firstValueFrom, map } from 'rxjs';
+import { firstValueFrom, map, catchError } from 'rxjs';
 import {
   CreateEventRequest,
   CreateEventResponce,
@@ -16,7 +16,7 @@ import {
 } from '../types';
 import { ajax } from 'rxjs/ajax';
 import { jsonToFormData } from './helpers';
-import { duration } from '@mui/material';
+import { handleAuthError } from './errorHandler';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,7 +25,10 @@ export async function getEvents(): Promise<CreateEventResponce[]> {
     url: `${API_BASE_URL}/list`,
     method: 'GET',
     headers: getHeaders(),
-  }).pipe(map(response => response.response.data));
+  }).pipe(
+    map(response => response.response.data),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
@@ -35,7 +38,10 @@ export async function getEventById(id: number): Promise<CreateEventResponce> {
     url: `${API_BASE_URL}/view/${id}`,
     method: 'GET',
     headers: getHeaders(),
-  }).pipe(map(response => response.response.data));
+  }).pipe(
+    map(response => response.response.data),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
@@ -63,7 +69,8 @@ export async function createEvent(eventData: CreateEventRequest): Promise<EventF
         localStorage.setItem('currentEventId', response.response.data.id);
       }
       return response.response.data;
-    })
+    }),
+    catchError(handleAuthError)
   );
 
   return firstValueFrom(res);
@@ -86,8 +93,29 @@ export async function updateEvent(
         localStorage.setItem('currentEventId', response.response.data.id);
       }
       return response.response.data;
-    })
+    }),
+    catchError(handleAuthError)
   );
+
+  return firstValueFrom(res);
+}
+
+export async function saveEvent(id: number): Promise<unknown> {
+  const res = ajax({
+    url: `${API_BASE_URL}/save/${id}`,
+    method: 'POST',
+    headers: getHeaders(),
+  }).pipe(catchError(handleAuthError));
+
+  return firstValueFrom(res);
+}
+
+export async function startEvent(id: number): Promise<unknown> {
+  const res = ajax({
+    url: `${API_BASE_URL}/start/${id}`,
+    method: 'POST',
+    headers: getHeaders(),
+  }).pipe(catchError(handleAuthError));
 
   return firstValueFrom(res);
 }
@@ -102,7 +130,10 @@ export async function createSubEvent(
     method: 'POST',
     body: formData,
     headers: getHeaders(),
-  }).pipe(map(response => response.response));
+  }).pipe(
+    map(response => response.response),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
@@ -123,7 +154,10 @@ export async function updateSubEvent(
     method: 'POST',
     body: formData,
     headers: getHeaders(),
-  }).pipe(map(response => response.response.data));
+  }).pipe(
+    map(response => response.response.data),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
@@ -133,7 +167,10 @@ export async function deleteSubEvent(subEventId: unknown): Promise<SuccessRespon
     url: `${API_BASE_URL}/${localStorage.currentEventId}/sub-event/delete/${subEventId}`,
     method: 'POST',
     headers: getHeaders(),
-  }).pipe(map(response => response.response));
+  }).pipe(
+    map(response => response.response),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
@@ -148,7 +185,10 @@ export async function createRaffle(
     method: 'POST',
     body: formData,
     headers: getHeaders(),
-  }).pipe(map(response => response.response));
+  }).pipe(
+    map(response => response.response),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
@@ -171,7 +211,10 @@ export async function updateRaffle(
     method: 'POST',
     body: formData,
     headers: getHeaders(),
-  }).pipe(map(response => response.response.data));
+  }).pipe(
+    map(response => response.response.data),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
@@ -181,7 +224,20 @@ export async function deleteRaffle(raffleId: unknown): Promise<SuccessResponse<v
     url: `${API_BASE_URL}/${localStorage.currentEventId}/raffle/delete/${raffleId}`,
     method: 'POST',
     headers: getHeaders(),
-  }).pipe(map(response => response.response));
+  }).pipe(
+    map(response => response.response),
+    catchError(handleAuthError)
+  );
+
+  return firstValueFrom(res);
+}
+
+export async function startRaffle(eventId: number): Promise<unknown> {
+  const res = ajax({
+    url: `${API_BASE_URL}/${eventId}/raffle/start`,
+    method: 'POST',
+    headers: getHeaders(),
+  }).pipe(catchError(handleAuthError));
 
   return firstValueFrom(res);
 }
@@ -197,14 +253,18 @@ export async function createPrize(
     method: 'POST',
     body: formData,
     headers: getHeaders(),
-  }).pipe(map(response => response.response));
+  }).pipe(
+    map(response => response.response),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
 
 export async function updatePrize(
   raffleId: number,
-  prizeData: CreatePrizeRequest
+  prizeId: string,
+  prizeData: { name: string; image: File | null }
 ): Promise<CreatePrizeResponse> {
   const resBody = {
     name: prizeData.name,
@@ -213,11 +273,14 @@ export async function updatePrize(
   const formData = jsonToFormData(resBody);
 
   const res = ajax<SuccessResponse<CreatePrizeResponse>>({
-    url: `${API_BASE_URL}/${localStorage.currentEventId}/raffle/${raffleId}/prize/${prizeData.id}/update`,
+    url: `${API_BASE_URL}/${localStorage.currentEventId}/raffle/${raffleId}/prize/${prizeId}/update`,
     method: 'POST',
     body: formData,
     headers: getHeaders(),
-  }).pipe(map(response => response.response.data));
+  }).pipe(
+    map(response => response.response.data),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }
@@ -230,7 +293,10 @@ export async function deletePrize(
     url: `${API_BASE_URL}/${localStorage.currentEventId}/raffle/${raffleId}/prize/${prizeId}/delete`,
     method: 'POST',
     headers: getHeaders(),
-  }).pipe(map(response => response.response));
+  }).pipe(
+    map(response => response.response),
+    catchError(handleAuthError)
+  );
 
   return firstValueFrom(res);
 }

@@ -5,7 +5,7 @@ import { Raffle } from '../raffle.type';
 import { GenericAdminActionResponse } from './common';
 
 export type CreateEventRequest = {
-  image: File;
+  image?: File;
   name: string;
   date: string;
   startTime: string;
