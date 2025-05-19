@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CreateEventResponce, EventFormData } from '../types';
 import CustomListItem from '../components/CustomListItem';
 import { useEvents } from '../hooks/useEvents';
-import { startEvent, startRaffle } from '../api/events';
+import { startEvent, startRaffle, endEvent } from '../api/events';
 
 type Tab = 'all' | EventFormData['showStatus'];
 
@@ -105,6 +105,11 @@ function MainPage() {
             sx={{
               minWidth: '165px',
               width: { xs: '100%', sm: 'fit-content' },
+            }}
+            onClick={() => {
+              if (event.id) {
+                endEvent(+event.id);
+              }
             }}
           >
             <span className="normal-case text-primary">Завершить ивент</span>

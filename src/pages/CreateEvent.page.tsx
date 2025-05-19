@@ -49,7 +49,7 @@ function CreateEventPage() {
         getCurrentEvent(eventData.id);
       }
     }
-  }, [location.state]);
+  }, []);
 
   function getCurrentEvent(id: CreateEventResponce['id']) {
     getEventById(id).then(data => {
@@ -79,6 +79,7 @@ function CreateEventPage() {
   const handleSubmit = async () => {
     if (currentEventId) {
       startEvent(currentEventId).then(() => {
+        localStorage.removeItem('currentEventId');
         navigate('/');
       });
     }

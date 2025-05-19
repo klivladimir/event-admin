@@ -190,7 +190,6 @@ function CreateEventDialog(props: CreateEventDialogProps) {
         !!endTimeError;
 
   function addPrize(): void {
-    console.log(currentRaffle);
     if (!currentRaffle) {
       const data = getResRaffleData();
       createRaffle(data).then(res => {
@@ -225,27 +224,33 @@ function CreateEventDialog(props: CreateEventDialogProps) {
 
   function handleSaveCurrentPrize(): void {
     const raffleId = currentRaffle?.id;
-    if (currentPrize?.id && raffleId) {
-      const data = {
-        name: currentPrize.name,
-        image: currentPrize.image as File,
-      } satisfies CreatePrizeRequest;
+    if (!raffleId) {
+      return;
+    }
 
-      updatePrize(+raffleId, data).then(() => {
-        onUpdate();
-      });
-    } else {
-      const name = currentPrize?.name;
-      const image = currentPrize?.image as File;
-      if (name && image) {
+    if (currentPrize?.image) {
+      if (currentPrize?.id && raffleId) {
         const data = {
-          name,
-          image,
+          name: currentPrize.name,
+          image: currentPrize.image as File,
         } satisfies CreatePrizeRequest;
 
-        createPrize(+raffleId!, data).then(() => {
+        updatePrize(+raffleId, currentPrize?.id, data).then(() => {
           onUpdate();
         });
+      } else {
+        const name = currentPrize?.name;
+        const image = currentPrize?.image as File;
+        if (name && image) {
+          const data = {
+            name,
+            image,
+          } satisfies CreatePrizeRequest;
+
+          createPrize(+raffleId, data).then(() => {
+            onUpdate();
+          });
+        }
       }
     }
   }

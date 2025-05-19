@@ -120,6 +120,16 @@ export async function startEvent(id: number): Promise<unknown> {
   return firstValueFrom(res);
 }
 
+export async function endEvent(id: number): Promise<unknown> {
+  const res = ajax({
+    url: `${API_BASE_URL}/end/${id}`,
+    method: 'POST',
+    headers: getHeaders(),
+  }).pipe(catchError(handleAuthError));
+
+  return firstValueFrom(res);
+}
+
 export async function createSubEvent(
   subEventData: CreateSubEventRequest
 ): Promise<SuccessResponse<CreateSubEventResponse>> {
