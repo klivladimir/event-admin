@@ -159,6 +159,7 @@ function CreateEventDialog(props: CreateEventDialogProps) {
         await updateSubEvent(+id, resData);
       } else {
         await createSubEvent(resData);
+        onUpdate();
       }
     } else if (type === 'raffle') {
       const data = getResRaffleData();

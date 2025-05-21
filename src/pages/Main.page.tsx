@@ -1,14 +1,13 @@
-import { Button, ButtonGroup, CircularProgress, List, Box } from '@mui/material';
+import { Button, ButtonGroup, CircularProgress, List } from '@mui/material';
 import Add from '@mui/icons-material/Add';
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { ArrowDropDown, ArrowDropUp, Check, AccountCircle } from '@mui/icons-material';
+import { Check, AccountCircle } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
-import { CreateEventResponce, EventFormData } from '../types';
-import CustomListItem from '../components/CustomListItem';
+import { CreateEventResponce } from '../types';
 import { useEvents } from '../hooks/useEvents';
-import { startEvent, startRaffle, endEvent } from '../api/events';
+import EventItem from '../components/EventItem';
 
-type Tab = 'all' | EventFormData['showStatus'];
+type Tab = 'all' | 'past' | 'today' | 'next' | 'pending';
 
 function MainPage() {
   const menu: { key: Tab; value: string }[] = [
@@ -20,10 +19,9 @@ function MainPage() {
   ];
 
   const [selectedTab, setSelectedTab] = useState<Tab>('all');
-  const { events, loading, error } = useEvents();
-  const [showWinnersForEventId, setShowWinnersForEventId] = useState<string | null>(null);
+  const { events, loading, error, refetchEvents } = useEvents();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [userEmail, setUserEmail] = useState<string | null>(null); // State for user email
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail');
@@ -35,6 +33,14 @@ function MainPage() {
   const handleLogout = useCallback(() => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userEmail');
+
+    const allLocalStorageKeys = Object.keys(localStorage);
+    allLocalStorageKeys.forEach(key => {
+      if (key.endsWith('endTime')) {
+        localStorage.removeItem(key);
+      }
+    });
+
     navigate('/login');
   }, [navigate]);
 
@@ -55,156 +61,8 @@ function MainPage() {
     });
   }, [events, selectedTab]);
 
-  const handleSelectEvent = useCallback(
-    (event: CreateEventResponce) => {
-      if (event.showStatus === 'pending') {
-        localStorage.setItem('currentEventId', event.id.toString());
-        navigate('/create-event/first', { state: event });
-      }
-    },
-    [navigate]
-  );
-
-  const renderEventButtons = (event: EventFormData) => {
-    if (event.showStatus === 'next') {
-      return (
-        <>
-          <Button
-            className="!rounded-full max-h-[32px] fill-primary !text-white"
-            variant="contained"
-            disableElevation
-            sx={{
-              minWidth: '160px',
-              width: { xs: '100%', sm: 'fit-content' },
-            }}
-            onClick={() => {
-              if (event.id) {
-                startEvent(+event.id);
-              }
-            }}
-          >
-            <span className="normal-case">Запустить ивент</span>
-          </Button>
-        </>
-      );
-    }
-    if (event.showStatus === 'today') {
-      return (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'flex-end', sm: 'center' },
-            gap: 2,
-            width: { xs: '100%', sm: 'fit-content' },
-          }}
-        >
-          <Button
-            className="!rounded-full max-h-[32px] !bg-transparent text-fg-secondary cursor-pointer"
-            variant="outlined"
-            sx={{
-              minWidth: '165px',
-              width: { xs: '100%', sm: 'fit-content' },
-            }}
-            onClick={() => {
-              if (event.id) {
-                endEvent(+event.id);
-              }
-            }}
-          >
-            <span className="normal-case text-primary">Завершить ивент</span>
-          </Button>
-
-          <Button
-            className="!rounded-full max-h-[32px] !bg-[#14AE5C] !text-white"
-            variant="contained"
-            disableElevation
-            sx={{
-              minWidth: '192px',
-              width: { xs: '100%', sm: 'fit-content' },
-            }}
-            onClick={() => {
-              if (event.id) {
-                startRaffle(+event.id);
-              }
-            }}
-          >
-            <span className="normal-case">Запустить розыгрыш</span>
-          </Button>
-        </Box>
-      );
-    }
-
-    if (event.showStatus === 'past') {
-      return (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'flex-end', sm: 'center' },
-            gap: 2,
-            width: { xs: '100%', sm: 'fit-content' },
-          }}
-        >
-          <Button
-            className="!rounded-full max-h-[32px] text-fg-secondary border border-fg-button-outline"
-            variant="outlined"
-            disableElevation
-            startIcon={
-              showWinnersForEventId === event.id ? (
-                <ArrowDropUp className="fill-primary" />
-              ) : (
-                <ArrowDropDown className="fill-primary" />
-              )
-            }
-            onClick={e => {
-              e.stopPropagation();
-              if (event.id) {
-                setShowWinnersForEventId(showWinnersForEventId === event.id ? null : event.id);
-              }
-            }}
-            sx={{
-              minWidth: '220px',
-              width: { xs: '100%', sm: 'fit-content' },
-            }}
-          >
-            <span className="normal-case text-primary">Показать победителей</span>
-          </Button>
-        </Box>
-      );
-    }
-
-    return null;
-  };
-
-  const renderEventStatus = (event: CreateEventResponce) => {
-    switch (event.showStatus) {
-      case 'next':
-        return (
-          <span className="text-[14px] leading-[20px] text-fg-secondary">Запланированное</span>
-        );
-      case 'today':
-        return <span className="text-[14px] leading-[20px] text-fg-secondary">Текущее</span>;
-      case 'past':
-        return <span className="text-[14px] leading-[20px] text-fg-secondary">Прошедшее</span>;
-      case 'pending':
-        return <span className="text-[14px] leading-[20px] text-fg-secondary">Черновик</span>;
-      default:
-        return null;
-    }
-  };
-
-  const renderWinners = (event: EventFormData) => {
-    if (event.showStatus === 'past' && showWinnersForEventId === event.id) {
-      return (
-        <div className="p-[16px] bg-[#E8DEF8] border-b-[1px] border-b-[#CAC4D0]">
-          <div className="text-[14px] leading-[20px] font-semibold mb-1">Победители:</div>
-          <div className="text-[14px] leading-[20px]">Приз: iPhone17 Ник: @robot Код: 4567</div>
-          <div className="text-[14px] leading-[20px]">Приз: iPhone18 Ник: @kolyan Код: 3232</div>
-        </div>
-      );
-    }
-    return null;
+  const handleTabChange = (tab: Tab) => {
+    setSelectedTab(tab);
   };
 
   return (
@@ -257,7 +115,7 @@ function MainPage() {
                   maxWidth: '187px',
                 }}
                 startIcon={selectedTab === item.key ? <Check /> : ''}
-                onClick={() => setSelectedTab(item.key)}
+                onClick={() => handleTabChange(item.key)}
                 className={` text-fg-button-secondary ${i === 0 ? '!rounded-l-full' : ''} ${i === menu.length - 1 ? '!rounded-r-full' : ''}`}
                 fullWidth
               >
@@ -273,34 +131,13 @@ function MainPage() {
               <div>{error}</div>
             ) : filteredEvents.length > 0 ? (
               <List className="w-full">
-                {filteredEvents.map(event => (
-                  <div onClick={() => handleSelectEvent(event)} key={event.id}>
-                    <CustomListItem
-                      height="88px"
-                      leftContent={
-                        <div className="flex flex-col">
-                          {renderEventStatus(event)}
-                          <span className="text-[16px] leading-[24px] text-fg-primary font-medium">
-                            {event.name}
-                          </span>
-                          <span className="text-[14px] leading-[20px] text-fg-secondary">
-                            {event.date
-                              ? new Date(event.date)
-                                  .toLocaleDateString('ru-RU', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                  })
-                                  .replace(/\./g, '.')
-                              : ''}{' '}
-                            - {event.startTime ? event.startTime.substring(11, 16) : ''}
-                          </span>
-                        </div>
-                      }
-                      rightContent={renderEventButtons(event)}
-                      additionalContent={renderWinners(event)}
-                    />
-                  </div>
+                {filteredEvents.map((event: CreateEventResponce) => (
+                  <EventItem
+                    key={event.id}
+                    event={event}
+                    onEventUpdated={refetchEvents}
+                    onTabChange={tab => handleTabChange(tab as Tab)}
+                  />
                 ))}
               </List>
             ) : (

@@ -86,8 +86,9 @@ function CreateEventPage() {
   };
 
   const updateSubEventList = () => {
+    const currentEventId = localStorage.getItem('currentEventId');
     if (currentEventId) {
-      getCurrentEvent(currentEventId);
+      getCurrentEvent(+currentEventId);
     }
   };
 

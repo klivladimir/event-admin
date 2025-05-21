@@ -32,9 +32,7 @@ const CustomListItem: React.FC<CustomListItemProps> = ({
             keepRowOnSmallScreens
               ? 'flex-row justify-between items-center'
               : 'flex-col items-start sm:flex-row sm:items-center sm:justify-between'
-          } gap-4 w-full border-b-[1px] border-b-[#CAC4D0] ${
-            additionalContent ? 'border-b-0' : ''
-          }`}
+          } gap-4 w-full  ${!additionalContent ? 'border-b-[1px] border-b-[#CAC4D0]' : ''}`}
         >
           <div className="flex flex-col pb-[8px] gap-[4px] whitespace-normal sm:whitespace-nowrap">
             {leftContent}

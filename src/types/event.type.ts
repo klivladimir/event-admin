@@ -1,6 +1,7 @@
 import { SubEventList } from './subEvent.type';
 import { RaffleList } from './raffle.type';
 import { DateTime } from 'luxon';
+import { Prize } from './prize.type';
 
 export type EventFormData = {
   id?: string;
@@ -15,6 +16,23 @@ export type EventFormData = {
   subEvents: SubEventList;
   raffles: RaffleList;
   showStatus?: 'past' | 'today' | 'next' | 'pending';
+  winners?: Winner[];
+  raffleStatus?: 'started' | 'waiting' | 'end';
+  duration?: string;
+};
+
+export type Winner = {
+  id: number;
+  number: string;
+  prize: Prize;
+  user: User;
+};
+
+export type User = {
+  id: number;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
 };
 
 export type EventList = EventFormData[];

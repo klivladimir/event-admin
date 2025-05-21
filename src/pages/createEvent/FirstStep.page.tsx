@@ -127,7 +127,8 @@ function FirstStepPage({
       data.image = form.image;
     }
 
-    createOrUpdateEvent(data).then(() => {
+    createOrUpdateEvent(data).then(res => {
+      localStorage.setItem('currentEventId', JSON.stringify(res?.id));
       navigate('../second');
     });
   };

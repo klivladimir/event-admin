@@ -20,7 +20,7 @@ import { handleAuthError } from './errorHandler';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export async function getEvents(): Promise<CreateEventResponce[]> {
+export function getEvents(): Promise<CreateEventResponce[]> {
   const res = ajax<SuccessResponse<CreateEventResponce[]>>({
     url: `${API_BASE_URL}/list`,
     method: 'GET',
@@ -33,7 +33,7 @@ export async function getEvents(): Promise<CreateEventResponce[]> {
   return firstValueFrom(res);
 }
 
-export async function getEventById(id: number): Promise<CreateEventResponce> {
+export function getEventById(id: number): Promise<CreateEventResponce> {
   const res = ajax<SuccessResponse<CreateEventResponce>>({
     url: `${API_BASE_URL}/view/${id}`,
     method: 'GET',
@@ -55,7 +55,7 @@ export async function createOrUpdateEvent(eventData: CreateEventRequest) {
   }
 }
 
-export async function createEvent(eventData: CreateEventRequest): Promise<EventFormData> {
+export function createEvent(eventData: CreateEventRequest): Promise<EventFormData> {
   const formData = jsonToFormData(eventData);
 
   const res = ajax<SuccessResponse<EventFormData>>({
