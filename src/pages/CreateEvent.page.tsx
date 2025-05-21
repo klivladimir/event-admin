@@ -77,8 +77,9 @@ function CreateEventPage() {
   }
 
   const handleSubmit = async () => {
+    const currentEventId = localStorage.getItem('currentEventId');
     if (currentEventId) {
-      startEvent(currentEventId).then(() => {
+      startEvent(+currentEventId).then(() => {
         localStorage.removeItem('currentEventId');
         navigate('/');
       });
