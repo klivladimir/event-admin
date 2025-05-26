@@ -28,6 +28,7 @@ export type CreateEventResponce = {
   raffles: Raffle[];
   showStatus: EventFormData['showStatus'];
   image: string;
+  winners?: any[];
 };
 
 export interface AdminEventListRequestParams {

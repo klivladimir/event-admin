@@ -58,7 +58,7 @@ function EventItem({ event, onEventUpdated, onTabChange }: EventItemProps) {
         if (newRemaining <= 0) {
           cleanupTimer();
           setTimeRemaining(0);
-          onEventUpdated();
+          setTimeout(() => onEventUpdated(), 2000);
         } else {
           setTimeRemaining(newRemaining);
         }
@@ -209,7 +209,7 @@ function EventItem({ event, onEventUpdated, onTabChange }: EventItemProps) {
             <span className="normal-case text-primary">Завершить ивент</span>
           </Button>
 
-          {hasRaffle && (
+          {hasRaffle && !event?.winners && (
             <Button
               className="!rounded-full max-h-[32px] !text-white"
               style={{
@@ -249,10 +249,34 @@ function EventItem({ event, onEventUpdated, onTabChange }: EventItemProps) {
                   {timeRemaining != null ? Math.max(0, Math.floor(timeRemaining / 1000)) : '0'} сек
                 </span>
               )}
-
               {eventData.raffleStatus === 'end' && (
                 <span className="normal-case">Розыгрыш прошел</span>
               )}
+            </Button>
+          )}
+
+          {hasRaffle && event?.winners && (
+            <Button
+              className="!rounded-full max-h-[32px] text-fg-secondary border border-fg-button-outline"
+              variant="outlined"
+              disableElevation
+              startIcon={
+                showWinners ? (
+                  <ArrowDropUp className="fill-primary" />
+                ) : (
+                  <ArrowDropDown className="fill-primary" />
+                )
+              }
+              onClick={e => {
+                e.stopPropagation();
+                setShowWinners(prev => !prev);
+              }}
+              sx={{
+                minWidth: '220px',
+                width: { xs: '100%', sm: 'fit-content' },
+              }}
+            >
+              <span className="normal-case text-primary">Показать победителей</span>
             </Button>
           )}
         </Box>
@@ -300,7 +324,7 @@ function EventItem({ event, onEventUpdated, onTabChange }: EventItemProps) {
   };
 
   const renderWinners = () => {
-    if (eventData.showStatus === 'past' && showWinners) {
+    if (['past', 'today'].includes(eventData.showStatus) && showWinners) {
       const winners = eventData.winners || [];
       return (
         <div className="p-[16px] bg-[#E8DEF8] border-b-[1px] border-b-[#CAC4D0]">
